@@ -1,7 +1,7 @@
-# Pipeline stages are implemented in future phases.
+# Pipeline stages.
 #
-# Phase 1:  Repository + Change Input
-# Phase 2:  Repository Ingestion + Context Reconstruction
+# Phase 1:  Repository + Change Input        [COMPLETE — see devflow.input]
+# Phase 2:  Repository Ingestion + Context Reconstruction  [ACTIVE — see devflow.context]
 # Phase 3:  Historical Context
 # Phase 4:  Impact Analysis
 # Phase 5:  Risk Analysis
