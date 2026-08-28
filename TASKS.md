@@ -293,7 +293,7 @@ PHASE 4
 
 Impact Analysis
 
-Status: BLOCKED
+Status: COMPLETE
 
 Goal
 

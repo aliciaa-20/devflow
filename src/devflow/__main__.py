@@ -4,6 +4,7 @@ from devflow.models.repository import RepositoryInputError
 from devflow.models.change import ChangeRequestError
 from devflow.context import build_context
 from devflow.history import build_historical_context
+from devflow.impact import build_impact_analysis
 
 
 def main() -> None:
@@ -106,6 +107,39 @@ def main() -> None:
     )
     print(
         "Phase 3 smoke test: run smoke_test_phase3.py with a real repository URL.\n"
+        "The __main__ demo does not perform live cloning to avoid mandatory\n"
+        "network dependency in the entry-point demo."
+    )
+
+    # ------------------------------------------------------------------
+    # Phase 4 demo: impact analysis.
+    # ------------------------------------------------------------------
+    print()
+    print("=== Phase 4: Impact Analysis ===")
+    print(
+        "To run impact analysis, call build_impact_analysis() with the\n"
+        "RepositoryContext produced by Phase 2 and (optionally) the\n"
+        "RepositoryHistory produced by Phase 3.\n"
+        "Example (requires network access and git):\n"
+        "\n"
+        "  from devflow.input import accept_input\n"
+        "  from devflow.context import build_context\n"
+        "  from devflow.history import build_historical_context\n"
+        "  from devflow.impact import build_impact_analysis\n"
+        "\n"
+        "  repo, change = accept_input(\n"
+        "      'https://github.com/encode/httpx',\n"
+        "      'Improve connection pooling behavior for async clients.',\n"
+        "  )\n"
+        "  ctx = build_context(repo, change)\n"
+        "  hist = build_historical_context(repo, ctx)\n"
+        "  impact = build_impact_analysis(ctx, hist)\n"
+        "  print(len(impact.findings), 'impact findings')\n"
+        "  for f in impact.confirmed_findings():\n"
+        "      print(f.affected_artifact, f.relationship.value)\n"
+    )
+    print(
+        "Phase 4 smoke test: run smoke_test_phase4.py with a real repository URL.\n"
         "The __main__ demo does not perform live cloning to avoid mandatory\n"
         "network dependency in the entry-point demo."
     )
