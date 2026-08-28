@@ -3,6 +3,7 @@ from devflow.input import accept_input
 from devflow.models.repository import RepositoryInputError
 from devflow.models.change import ChangeRequestError
 from devflow.context import build_context
+from devflow.history import build_historical_context
 
 
 def main() -> None:
@@ -75,6 +76,36 @@ def main() -> None:
     )
     print(
         "Phase 2 smoke test: pass a real URL via the build_context() API.\n"
+        "The __main__ demo does not perform live cloning to avoid mandatory\n"
+        "network dependency in the entry-point demo."
+    )
+
+    # ------------------------------------------------------------------
+    # Phase 3 demo: historical context.
+    # ------------------------------------------------------------------
+    print()
+    print("=== Phase 3: Historical Context ===")
+    print(
+        "To run historical context extraction, call build_historical_context() with a\n"
+        "RepositoryInput and RepositoryContext produced by Phase 2.\n"
+        "Example (requires network access and git):\n"
+        "\n"
+        "  from devflow.input import accept_input\n"
+        "  from devflow.context import build_context\n"
+        "  from devflow.history import build_historical_context\n"
+        "\n"
+        "  repo, change = accept_input(\n"
+        "      'https://github.com/pallets/flask',\n"
+        "      'Refactor request context handling.',\n"
+        "  )\n"
+        "  ctx = build_context(repo, change)\n"
+        "  history = build_historical_context(repo, ctx)\n"
+        "  print(history.total_commits_found, 'commits found')\n"
+        "  for art_hist in history.artifacts_with_history():\n"
+        "      print(art_hist.artifact_path, ':', len(art_hist.commits), 'commits')\n"
+    )
+    print(
+        "Phase 3 smoke test: run smoke_test_phase3.py with a real repository URL.\n"
         "The __main__ demo does not perform live cloning to avoid mandatory\n"
         "network dependency in the entry-point demo."
     )
