@@ -22,6 +22,10 @@ body {
   min-height: 100vh;
 }
 
+button, select, input {
+  font: inherit;
+}
+
 button {
   border: 1px solid rgba(148, 163, 184, 0.32);
   background: rgba(15, 23, 42, 0.9);
@@ -30,11 +34,22 @@ button {
   padding: 7px 10px;
   font-weight: 600;
   cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease, opacity 150ms ease;
 }
 
-button:hover {
+button:hover:not(:disabled) {
   border-color: rgba(148, 163, 184, 0.5);
   background: rgba(30, 41, 59, 0.95);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+button.active {
+  border-color: rgba(96, 165, 250, 0.7);
+  background: rgba(30, 64, 175, 0.35);
 }
 
 .app-shell {
@@ -146,12 +161,41 @@ button:hover {
   left: 16px;
   z-index: 20;
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+  max-width: calc(100% - 32px);
   background: rgba(10, 16, 27, 0.72);
   border: 1px solid rgba(148, 163, 184, 0.22);
   border-radius: 10px;
   padding: 8px;
   backdrop-filter: blur(4px);
+}
+
+.toolbar-advanced {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.toolbar-search-box {
+  display: flex;
+}
+
+.toolbar-search-box input,
+.toolbar-relationship-filter select {
+  width: 100%;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(15, 23, 42, 0.85);
+  color: #edf7ff;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.toolbar-actions,
+.toolbar-filter-group,
+.toolbar-relationship-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .graph-status {
@@ -318,36 +362,89 @@ button:hover {
 .field-label {
   color: #9eb7d6;
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .inspector-section {
   margin-bottom: 16px;
-  color: #edf5ff;
-  line-height: 1.5;
 }
 
 .evidence-row {
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  background: rgba(19, 28, 40, 0.88);
-  border-radius: 8px;
-  padding: 8px 9px;
-  margin-top: 8px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 8px 0;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  color: #edf5ff;
 }
 
 .evidence-pill {
-  display: inline-block;
-  background: rgba(96, 165, 250, 0.2);
-  color: #dfe9ff;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 6px;
   border-radius: 999px;
-  padding: 2px 6px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(30, 41, 59, 0.85);
   font-size: 10px;
-  font-weight: 700;
   letter-spacing: 0.08em;
-  margin-bottom: 6px;
+  color: #dfe9ff;
+}
+
+.repo-link a {
+  color: #dfe9ff;
+  text-decoration: none;
+}
+
+.error-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  text-align: center;
+}
+
+.error-message {
+  font-size: 28px;
+  font-weight: 700;
+  color: #edf5ff;
+}
+
+.error-detail {
+  color: #b8c8e2;
+  font-size: 14px;
+  max-width: 520px;
+  line-height: 1.5;
+}
+
+.react-flow__controls {
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.react-flow__controls-button {
+  background: rgba(15, 23, 42, 0.9);
+  border: 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: 0;
+}
+
+.react-flow__edges text,
+.react-flow__edge-text {
+  font-size: 10px;
+  fill: #dfeaff;
+}
+
+.react-flow__node.selected {
+  z-index: 2;
 }
 
 .react-flow__node {

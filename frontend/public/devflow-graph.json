@@ -1,67 +1,32 @@
 {
-  "repository_url": "https://github.com/pallets/flask",
-  "owner": "pallets",
-  "name": "flask",
-  "change_summary": "Refactor request context handling.",
+  "repository_url": "https://github.com/tt-a1i/archify",
+  "owner": "tt-a1i",
+  "name": "archify",
+  "change_summary": "Check usage",
   "nodes": [
     {
       "id": "change",
       "label": "Developer change",
       "node_type": "change",
-      "description": "Refactor request context handling.",
+      "description": "Check usage",
       "metadata": {
-        "repository_url": "https://github.com/pallets/flask",
-        "owner": "pallets",
-        "name": "flask",
-        "summary": "Refactor request context handling."
+        "repository_url": "https://github.com/tt-a1i/archify",
+        "owner": "tt-a1i",
+        "name": "archify",
+        "summary": "Check usage"
       },
       "risk_severity": null
     },
     {
-      "id": "artifact:src/flask/ctx.py",
-      "label": "src/flask/ctx.py",
-      "node_type": "source",
-      "description": "path keywords ['ctx'] match change keywords",
-      "metadata": {
-        "evidence": [
-          {
-            "artifact": "src/flask/ctx.py",
-            "description": "Git commit 06ea505 modified 'src/flask/ctx.py': 'separate copy per call' (DIRECT_EVIDENCE: git log).",
-            "evidence_type": "DIRECT_EVIDENCE",
-            "confidence": "likely"
-          },
-          {
-            "artifact": "src/flask/ctx.py",
-            "description": "Git commit a29f88c modified 'src/flask/ctx.py': 'document that headers must be set before streaming' (DIRECT_EVIDENCE: git log).",
-            "evidence_type": "DIRECT_EVIDENCE",
-            "confidence": "likely"
-          },
-          {
-            "artifact": "src/flask/ctx.py",
-            "description": "Git commit fbb6f0b modified 'src/flask/ctx.py': 'all teardown callbacks are called despite errors' (DIRECT_EVIDENCE: git log).",
-            "evidence_type": "DIRECT_EVIDENCE",
-            "confidence": "likely"
-          }
-        ],
-        "relevance_reason": "keyword_match",
-        "confidence": "likely",
-        "artifact_kind": "source",
-        "relationship": "historically_changed_with",
-        "evidence_strength": "likely",
-        "finding_type": "historical"
-      },
-      "risk_severity": null
-    },
-    {
-      "id": "artifact:tests/templates/context_template.html",
-      "label": "tests/templates/context_template.html",
+      "id": "artifact:archify/test/visual-check.test.mjs",
+      "label": "archify/test/visual-check.test.mjs",
       "node_type": "test",
-      "description": "path keywords ['context'] match change keywords",
+      "description": "path keywords ['check'] match change keywords",
       "metadata": {
         "evidence": [
           {
-            "artifact": "tests/templates/context_template.html",
-            "description": "Test file 'tests/templates/context_template.html' was identified as relevant by Phase 2 (reason: keyword_match). No source-stem match found; relationship is inferred.",
+            "artifact": "archify/test/visual-check.test.mjs",
+            "description": "Test file 'archify/test/visual-check.test.mjs' was identified as relevant by Phase 2 (reason: keyword_match). No source-stem match found; relationship is inferred.",
             "evidence_type": "INFERENCE",
             "confidence": "possible"
           }
@@ -76,168 +41,35 @@
       "risk_severity": null
     },
     {
-      "id": "artifact:tests/test_request.py",
-      "label": "tests/test_request.py",
-      "node_type": "test",
-      "description": "path keywords ['request'] match change keywords",
-      "metadata": {
-        "evidence": [
-          {
-            "artifact": "tests/test_request.py",
-            "description": "Test file 'tests/test_request.py' was identified as relevant by Phase 2 (reason: keyword_match). No source-stem match found; relationship is inferred.",
-            "evidence_type": "INFERENCE",
-            "confidence": "possible"
-          }
-        ],
-        "relevance_reason": "keyword_match",
-        "confidence": "likely",
-        "artifact_kind": "test",
-        "relationship": "tested_by",
-        "evidence_strength": "possible",
-        "finding_type": "test"
-      },
-      "risk_severity": null
-    },
-    {
-      "id": "history:src/flask/ctx.py",
-      "label": "History: src/flask/ctx.py",
+      "id": "history:archify/test/visual-check.test.mjs",
+      "label": "History: archify/test/visual-check.test.mjs",
       "node_type": "historical",
-      "description": "12 relevant commit(s) for 'src/flask/ctx.py'",
-      "metadata": {
-        "commit_count": "12",
-        "latest_commit": "06ea505",
-        "evidence": [
-          {
-            "artifact": "src/flask/ctx.py",
-            "description": "Git commit 06ea505 modified src/flask/ctx.py. Message: \"separate copy per call\". Author: David Lord. Date: 2026-05-01 20:31:50 -0700.",
-            "evidence_type": "direct_modification",
-            "confidence": "confirmed"
-          },
-          {
-            "artifact": "src/flask/ctx.py",
-            "description": "Git commit a29f88c modified src/flask/ctx.py. Message: \"document that headers must be set before streaming\". Author: David Lord. Date: 2026-03-04 07:36:09 -0800.",
-            "evidence_type": "direct_modification",
-            "confidence": "confirmed"
-          },
-          {
-            "artifact": "src/flask/ctx.py",
-            "description": "Git commit fbb6f0b modified src/flask/ctx.py. Message: \"all teardown callbacks are called despite errors\". Author: David Lord. Date: 2026-02-19 19:41:50 -0800.",
-            "evidence_type": "direct_modification",
-            "confidence": "confirmed"
-          },
-          {
-            "artifact": "src/flask/ctx.py",
-            "description": "Git commit a411a24 modified src/flask/ctx.py. Message: \"add back opening session on context push\". Author: David Lord. Date: 2026-02-19 08:35:48 -0800.",
-            "evidence_type": "direct_modification",
-            "confidence": "confirmed"
-          },
-          {
-            "artifact": "src/flask/ctx.py",
-            "description": "Git commit c17f379 modified src/flask/ctx.py. Message: \"request context tracks session access\". Author: David Lord. Date: 2026-02-18 19:02:54 -0800.",
-            "evidence_type": "direct_modification",
-            "confidence": "confirmed"
-          },
-          {
-            "artifact": "src/flask/ctx.py",
-            "description": "Git commit 6a64969 modified src/flask/ctx.py. Message: \"pass context through dispatch methods\". Author: David Lord. Date: 2025-09-19 17:33:30 -0700.",
-            "evidence_type": "direct_modification",
-            "confidence": "confirmed"
-          },
-          {
-            "artifact": "src/flask/ctx.py",
-            "description": "Git commit c2705ff modified src/flask/ctx.py. Message: \"merge app and request context\". Author: David Lord. Date: 2025-09-19 16:43:53 -0700.",
-            "evidence_type": "direct_modification",
-            "confidence": "confirmed"
-          },
-          {
-            "artifact": "src/flask/ctx.py",
-            "description": "Git commit f04c5e6 modified src/flask/ctx.py. Message: \"update dev dependencies\". Author: David Lord. Date: 2025-06-08 09:52:11 -0700.",
-            "evidence_type": "direct_modification",
-            "confidence": "confirmed"
-          },
-          {
-            "artifact": "src/flask/ctx.py",
-            "description": "Git commit e3535f9 modified src/flask/ctx.py. Message: \"Bump actions/checkout from 4.1.4 to 4.1.6 in the github-actions group\". Author: dependabot[bot]. Date: 2024-06-01 15:55:45 +0000.",
-            "evidence_type": "direct_modification",
-            "confidence": "confirmed"
-          },
-          {
-            "artifact": "src/flask/ctx.py",
-            "description": "Git commit 422e05e modified src/flask/ctx.py. Message: \"Bump the python-requirements group in /requirements with 3 updates (#5492)\". Author: David Lord. Date: 2024-06-01 08:16:45 -0700.",
-            "evidence_type": "direct_modification",
-            "confidence": "confirmed"
-          },
-          {
-            "artifact": "src/flask/ctx.py",
-            "description": "Git commit 1af8f95 modified src/flask/ctx.py. Message: \"fix super call in list comprehension\". Author: Tony Huang. Date: 2024-02-03 12:36:06 -0800.",
-            "evidence_type": "direct_modification",
-            "confidence": "confirmed"
-          },
-          {
-            "artifact": "src/flask/ctx.py",
-            "description": "Git commit 3435d2f modified src/flask/ctx.py. Message: \"Fix jinja_loader typehint (#5389)\". Author: David Lord. Date: 2024-02-03 12:18:40 -0800.",
-            "evidence_type": "direct_modification",
-            "confidence": "confirmed"
-          }
-        ]
-      },
-      "risk_severity": null
-    },
-    {
-      "id": "history:tests/templates/context_template.html",
-      "label": "History: tests/templates/context_template.html",
-      "node_type": "historical",
-      "description": "4 relevant commit(s) for 'tests/templates/context_template.html'",
+      "description": "4 relevant commit(s) for 'archify/test/visual-check.test.mjs'",
       "metadata": {
         "commit_count": "4",
-        "latest_commit": "e3535f9",
+        "latest_commit": "7fe139e",
         "evidence": [
           {
-            "artifact": "tests/templates/context_template.html",
-            "description": "Git commit e3535f9 modified tests/templates/context_template.html. Message: \"Bump actions/checkout from 4.1.4 to 4.1.6 in the github-actions group\". Author: dependabot[bot]. Date: 2024-06-01 15:55:45 +0000.",
+            "artifact": "archify/test/visual-check.test.mjs",
+            "description": "Git commit 7fe139e modified archify/test/visual-check.test.mjs. Message: \"fix(viewer): keep navigation dock clear of diagram stage (#113)\". Author: Friend A. Date: 2026-08-28 11:16:05 +0800.",
             "evidence_type": "direct_modification",
             "confidence": "confirmed"
           },
           {
-            "artifact": "tests/templates/context_template.html",
-            "description": "Git commit 422e05e modified tests/templates/context_template.html. Message: \"Bump the python-requirements group in /requirements with 3 updates (#5492)\". Author: David Lord. Date: 2024-06-01 08:16:45 -0700.",
+            "artifact": "archify/test/visual-check.test.mjs",
+            "description": "Git commit c784542 modified archify/test/visual-check.test.mjs. Message: \"fix(viewer): keep navigation dock clear of legends (#101)\". Author: sunsunsun-java. Date: 2026-08-22 00:30:23 +0800.",
             "evidence_type": "direct_modification",
             "confidence": "confirmed"
           },
           {
-            "artifact": "tests/templates/context_template.html",
-            "description": "Git commit 1af8f95 modified tests/templates/context_template.html. Message: \"fix super call in list comprehension\". Author: Tony Huang. Date: 2024-02-03 12:36:06 -0800.",
+            "artifact": "archify/test/visual-check.test.mjs",
+            "description": "Git commit 98648ce modified archify/test/visual-check.test.mjs. Message: \"fix(renderers): keep automatic routes clear and boundary composition readable (#96)\". Author: sunsunsun-java. Date: 2026-08-21 14:30:47 +0800.",
             "evidence_type": "direct_modification",
             "confidence": "confirmed"
           },
           {
-            "artifact": "tests/templates/context_template.html",
-            "description": "Git commit 3435d2f modified tests/templates/context_template.html. Message: \"Fix jinja_loader typehint (#5389)\". Author: David Lord. Date: 2024-02-03 12:18:40 -0800.",
-            "evidence_type": "direct_modification",
-            "confidence": "confirmed"
-          }
-        ]
-      },
-      "risk_severity": null
-    },
-    {
-      "id": "history:tests/test_request.py",
-      "label": "History: tests/test_request.py",
-      "node_type": "historical",
-      "description": "2 relevant commit(s) for 'tests/test_request.py'",
-      "metadata": {
-        "commit_count": "2",
-        "latest_commit": "4f7156f",
-        "evidence": [
-          {
-            "artifact": "tests/test_request.py",
-            "description": "Git commit 4f7156f modified tests/test_request.py. Message: \"configure and check trusted_hosts\". Author: David Lord. Date: 2024-11-12 21:01:55 -0800.",
-            "evidence_type": "direct_modification",
-            "confidence": "confirmed"
-          },
-          {
-            "artifact": "tests/test_request.py",
-            "description": "Git commit c7a5388 modified tests/test_request.py. Message: \"add config and docs for limits\". Author: David Lord. Date: 2024-11-01 13:17:53 -0700.",
+            "artifact": "archify/test/visual-check.test.mjs",
+            "description": "Git commit 6c03124 modified archify/test/visual-check.test.mjs. Message: \"feat: add bounded visual evidence checks\". Author: tt-a1i. Date: 2026-08-11 12:02:53 +0800.",
             "evidence_type": "direct_modification",
             "confidence": "confirmed"
           }
@@ -248,135 +80,33 @@
   ],
   "edges": [
     {
-      "source": "artifact:src/flask/ctx.py",
-      "target": "history:src/flask/ctx.py",
-      "relationship": "historically_changed_with",
-      "description": "Git evidence shows 12 historical changes.",
-      "confidence": "confirmed",
-      "evidence": [
-        {
-          "artifact": "src/flask/ctx.py",
-          "description": "Git commit 06ea505 modified src/flask/ctx.py. Message: \"separate copy per call\". Author: David Lord. Date: 2026-05-01 20:31:50 -0700.",
-          "evidence_type": "direct_modification",
-          "confidence": "confirmed"
-        },
-        {
-          "artifact": "src/flask/ctx.py",
-          "description": "Git commit a29f88c modified src/flask/ctx.py. Message: \"document that headers must be set before streaming\". Author: David Lord. Date: 2026-03-04 07:36:09 -0800.",
-          "evidence_type": "direct_modification",
-          "confidence": "confirmed"
-        },
-        {
-          "artifact": "src/flask/ctx.py",
-          "description": "Git commit fbb6f0b modified src/flask/ctx.py. Message: \"all teardown callbacks are called despite errors\". Author: David Lord. Date: 2026-02-19 19:41:50 -0800.",
-          "evidence_type": "direct_modification",
-          "confidence": "confirmed"
-        },
-        {
-          "artifact": "src/flask/ctx.py",
-          "description": "Git commit a411a24 modified src/flask/ctx.py. Message: \"add back opening session on context push\". Author: David Lord. Date: 2026-02-19 08:35:48 -0800.",
-          "evidence_type": "direct_modification",
-          "confidence": "confirmed"
-        },
-        {
-          "artifact": "src/flask/ctx.py",
-          "description": "Git commit c17f379 modified src/flask/ctx.py. Message: \"request context tracks session access\". Author: David Lord. Date: 2026-02-18 19:02:54 -0800.",
-          "evidence_type": "direct_modification",
-          "confidence": "confirmed"
-        },
-        {
-          "artifact": "src/flask/ctx.py",
-          "description": "Git commit 6a64969 modified src/flask/ctx.py. Message: \"pass context through dispatch methods\". Author: David Lord. Date: 2025-09-19 17:33:30 -0700.",
-          "evidence_type": "direct_modification",
-          "confidence": "confirmed"
-        },
-        {
-          "artifact": "src/flask/ctx.py",
-          "description": "Git commit c2705ff modified src/flask/ctx.py. Message: \"merge app and request context\". Author: David Lord. Date: 2025-09-19 16:43:53 -0700.",
-          "evidence_type": "direct_modification",
-          "confidence": "confirmed"
-        },
-        {
-          "artifact": "src/flask/ctx.py",
-          "description": "Git commit f04c5e6 modified src/flask/ctx.py. Message: \"update dev dependencies\". Author: David Lord. Date: 2025-06-08 09:52:11 -0700.",
-          "evidence_type": "direct_modification",
-          "confidence": "confirmed"
-        },
-        {
-          "artifact": "src/flask/ctx.py",
-          "description": "Git commit e3535f9 modified src/flask/ctx.py. Message: \"Bump actions/checkout from 4.1.4 to 4.1.6 in the github-actions group\". Author: dependabot[bot]. Date: 2024-06-01 15:55:45 +0000.",
-          "evidence_type": "direct_modification",
-          "confidence": "confirmed"
-        },
-        {
-          "artifact": "src/flask/ctx.py",
-          "description": "Git commit 422e05e modified src/flask/ctx.py. Message: \"Bump the python-requirements group in /requirements with 3 updates (#5492)\". Author: David Lord. Date: 2024-06-01 08:16:45 -0700.",
-          "evidence_type": "direct_modification",
-          "confidence": "confirmed"
-        },
-        {
-          "artifact": "src/flask/ctx.py",
-          "description": "Git commit 1af8f95 modified src/flask/ctx.py. Message: \"fix super call in list comprehension\". Author: Tony Huang. Date: 2024-02-03 12:36:06 -0800.",
-          "evidence_type": "direct_modification",
-          "confidence": "confirmed"
-        },
-        {
-          "artifact": "src/flask/ctx.py",
-          "description": "Git commit 3435d2f modified src/flask/ctx.py. Message: \"Fix jinja_loader typehint (#5389)\". Author: David Lord. Date: 2024-02-03 12:18:40 -0800.",
-          "evidence_type": "direct_modification",
-          "confidence": "confirmed"
-        }
-      ]
-    },
-    {
-      "source": "artifact:tests/templates/context_template.html",
-      "target": "history:tests/templates/context_template.html",
+      "source": "artifact:archify/test/visual-check.test.mjs",
+      "target": "history:archify/test/visual-check.test.mjs",
       "relationship": "historically_changed_with",
       "description": "Git evidence shows 4 historical changes.",
       "confidence": "confirmed",
       "evidence": [
         {
-          "artifact": "tests/templates/context_template.html",
-          "description": "Git commit e3535f9 modified tests/templates/context_template.html. Message: \"Bump actions/checkout from 4.1.4 to 4.1.6 in the github-actions group\". Author: dependabot[bot]. Date: 2024-06-01 15:55:45 +0000.",
+          "artifact": "archify/test/visual-check.test.mjs",
+          "description": "Git commit 7fe139e modified archify/test/visual-check.test.mjs. Message: \"fix(viewer): keep navigation dock clear of diagram stage (#113)\". Author: Friend A. Date: 2026-08-28 11:16:05 +0800.",
           "evidence_type": "direct_modification",
           "confidence": "confirmed"
         },
         {
-          "artifact": "tests/templates/context_template.html",
-          "description": "Git commit 422e05e modified tests/templates/context_template.html. Message: \"Bump the python-requirements group in /requirements with 3 updates (#5492)\". Author: David Lord. Date: 2024-06-01 08:16:45 -0700.",
+          "artifact": "archify/test/visual-check.test.mjs",
+          "description": "Git commit c784542 modified archify/test/visual-check.test.mjs. Message: \"fix(viewer): keep navigation dock clear of legends (#101)\". Author: sunsunsun-java. Date: 2026-08-22 00:30:23 +0800.",
           "evidence_type": "direct_modification",
           "confidence": "confirmed"
         },
         {
-          "artifact": "tests/templates/context_template.html",
-          "description": "Git commit 1af8f95 modified tests/templates/context_template.html. Message: \"fix super call in list comprehension\". Author: Tony Huang. Date: 2024-02-03 12:36:06 -0800.",
+          "artifact": "archify/test/visual-check.test.mjs",
+          "description": "Git commit 98648ce modified archify/test/visual-check.test.mjs. Message: \"fix(renderers): keep automatic routes clear and boundary composition readable (#96)\". Author: sunsunsun-java. Date: 2026-08-21 14:30:47 +0800.",
           "evidence_type": "direct_modification",
           "confidence": "confirmed"
         },
         {
-          "artifact": "tests/templates/context_template.html",
-          "description": "Git commit 3435d2f modified tests/templates/context_template.html. Message: \"Fix jinja_loader typehint (#5389)\". Author: David Lord. Date: 2024-02-03 12:18:40 -0800.",
-          "evidence_type": "direct_modification",
-          "confidence": "confirmed"
-        }
-      ]
-    },
-    {
-      "source": "artifact:tests/test_request.py",
-      "target": "history:tests/test_request.py",
-      "relationship": "historically_changed_with",
-      "description": "Git evidence shows 2 historical changes.",
-      "confidence": "confirmed",
-      "evidence": [
-        {
-          "artifact": "tests/test_request.py",
-          "description": "Git commit 4f7156f modified tests/test_request.py. Message: \"configure and check trusted_hosts\". Author: David Lord. Date: 2024-11-12 21:01:55 -0800.",
-          "evidence_type": "direct_modification",
-          "confidence": "confirmed"
-        },
-        {
-          "artifact": "tests/test_request.py",
-          "description": "Git commit c7a5388 modified tests/test_request.py. Message: \"add config and docs for limits\". Author: David Lord. Date: 2024-11-01 13:17:53 -0700.",
+          "artifact": "archify/test/visual-check.test.mjs",
+          "description": "Git commit 6c03124 modified archify/test/visual-check.test.mjs. Message: \"feat: add bounded visual evidence checks\". Author: tt-a1i. Date: 2026-08-11 12:02:53 +0800.",
           "evidence_type": "direct_modification",
           "confidence": "confirmed"
         }
@@ -384,26 +114,26 @@
     },
     {
       "source": "change",
-      "target": "artifact:src/flask/ctx.py",
+      "target": "artifact:archify/test/visual-check.test.mjs",
       "relationship": "historically_changed_with",
-      "description": "'src/flask/ctx.py' has 12 recorded commit(s) in the repository history relevant to this area of the codebase.",
+      "description": "'archify/test/visual-check.test.mjs' has 4 recorded commit(s) in the repository history relevant to this area of the codebase.",
       "confidence": "likely",
       "evidence": [
         {
-          "artifact": "src/flask/ctx.py",
-          "description": "Git commit 06ea505 modified 'src/flask/ctx.py': 'separate copy per call' (DIRECT_EVIDENCE: git log).",
+          "artifact": "archify/test/visual-check.test.mjs",
+          "description": "Git commit 7fe139e modified 'archify/test/visual-check.test.mjs': 'fix(viewer): keep navigation dock clear of diagram stage (#113)' (refs: #113) (DIRECT_EVIDENCE: git log).",
           "evidence_type": "DIRECT_EVIDENCE",
           "confidence": "likely"
         },
         {
-          "artifact": "src/flask/ctx.py",
-          "description": "Git commit a29f88c modified 'src/flask/ctx.py': 'document that headers must be set before streaming' (DIRECT_EVIDENCE: git log).",
+          "artifact": "archify/test/visual-check.test.mjs",
+          "description": "Git commit c784542 modified 'archify/test/visual-check.test.mjs': 'fix(viewer): keep navigation dock clear of legends (#101)' (refs: #101) (DIRECT_EVIDENCE: git log).",
           "evidence_type": "DIRECT_EVIDENCE",
           "confidence": "likely"
         },
         {
-          "artifact": "src/flask/ctx.py",
-          "description": "Git commit fbb6f0b modified 'src/flask/ctx.py': 'all teardown callbacks are called despite errors' (DIRECT_EVIDENCE: git log).",
+          "artifact": "archify/test/visual-check.test.mjs",
+          "description": "Git commit 98648ce modified 'archify/test/visual-check.test.mjs': 'fix(renderers): keep automatic routes clear and boundary composition readable (#' (refs: #96) (DIRECT_EVIDENCE: git log).",
           "evidence_type": "DIRECT_EVIDENCE",
           "confidence": "likely"
         }
@@ -411,92 +141,14 @@
     },
     {
       "source": "change",
-      "target": "artifact:tests/templates/context_template.html",
-      "relationship": "historically_changed_with",
-      "description": "'tests/templates/context_template.html' has 4 recorded commit(s) in the repository history relevant to this area of the codebase.",
-      "confidence": "likely",
-      "evidence": [
-        {
-          "artifact": "tests/templates/context_template.html",
-          "description": "Git commit e3535f9 modified 'tests/templates/context_template.html': 'Bump actions/checkout from 4.1.4 to 4.1.6 in the github-actions group' (DIRECT_EVIDENCE: git log).",
-          "evidence_type": "DIRECT_EVIDENCE",
-          "confidence": "likely"
-        },
-        {
-          "artifact": "tests/templates/context_template.html",
-          "description": "Git commit 422e05e modified 'tests/templates/context_template.html': 'Bump the python-requirements group in /requirements with 3 updates (#5492)' (refs: #5492) (DIRECT_EVIDENCE: git log).",
-          "evidence_type": "DIRECT_EVIDENCE",
-          "confidence": "likely"
-        },
-        {
-          "artifact": "tests/templates/context_template.html",
-          "description": "Git commit 1af8f95 modified 'tests/templates/context_template.html': 'fix super call in list comprehension' (DIRECT_EVIDENCE: git log).",
-          "evidence_type": "DIRECT_EVIDENCE",
-          "confidence": "likely"
-        }
-      ]
-    },
-    {
-      "source": "change",
-      "target": "artifact:tests/test_request.py",
-      "relationship": "historically_changed_with",
-      "description": "'tests/test_request.py' has 2 recorded commit(s) in the repository history relevant to this area of the codebase.",
-      "confidence": "likely",
-      "evidence": [
-        {
-          "artifact": "tests/test_request.py",
-          "description": "Git commit 4f7156f modified 'tests/test_request.py': 'configure and check trusted_hosts' (DIRECT_EVIDENCE: git log).",
-          "evidence_type": "DIRECT_EVIDENCE",
-          "confidence": "likely"
-        },
-        {
-          "artifact": "tests/test_request.py",
-          "description": "Git commit c7a5388 modified 'tests/test_request.py': 'add config and docs for limits' (DIRECT_EVIDENCE: git log).",
-          "evidence_type": "DIRECT_EVIDENCE",
-          "confidence": "likely"
-        }
-      ]
-    },
-    {
-      "source": "change",
-      "target": "artifact:src/flask/ctx.py",
-      "relationship": "impacts",
-      "description": "Source file 'src/flask/ctx.py' may be affected by the change ('Refactor request context handling.').",
-      "confidence": "likely",
-      "evidence": [
-        {
-          "artifact": "src/flask/ctx.py",
-          "description": "Phase 2 identified 'src/flask/ctx.py' as relevant (reason: keyword_match; confidence: likely). Evidence: path keywords ['ctx'] match change keywords",
-          "evidence_type": "DERIVED_RELATIONSHIP",
-          "confidence": "likely"
-        }
-      ]
-    },
-    {
-      "source": "change",
-      "target": "artifact:tests/templates/context_template.html",
+      "target": "artifact:archify/test/visual-check.test.mjs",
       "relationship": "tested_by",
-      "description": "Test 'tests/templates/context_template.html' may need review after the change.",
+      "description": "Test 'archify/test/visual-check.test.mjs' may need review after the change.",
       "confidence": "possible",
       "evidence": [
         {
-          "artifact": "tests/templates/context_template.html",
-          "description": "Test file 'tests/templates/context_template.html' was identified as relevant by Phase 2 (reason: keyword_match). No source-stem match found; relationship is inferred.",
-          "evidence_type": "INFERENCE",
-          "confidence": "possible"
-        }
-      ]
-    },
-    {
-      "source": "change",
-      "target": "artifact:tests/test_request.py",
-      "relationship": "tested_by",
-      "description": "Test 'tests/test_request.py' may need review after the change.",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "artifact": "tests/test_request.py",
-          "description": "Test file 'tests/test_request.py' was identified as relevant by Phase 2 (reason: keyword_match). No source-stem match found; relationship is inferred.",
+          "artifact": "archify/test/visual-check.test.mjs",
+          "description": "Test file 'archify/test/visual-check.test.mjs' was identified as relevant by Phase 2 (reason: keyword_match). No source-stem match found; relationship is inferred.",
           "evidence_type": "INFERENCE",
           "confidence": "possible"
         }
@@ -504,5 +156,5 @@
     }
   ],
   "error": null,
-  "generated_at": "2026-08-29T10:41:54Z"
+  "generated_at": "2026-08-29T13:28:14Z"
 }

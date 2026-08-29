@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Background,
   Controls,
@@ -38,6 +38,7 @@ export type GraphData = {
 };
 
 type AppProps = { graph: GraphData; error?: string };
+type NodeTypeFilter = 'all' | 'change' | 'source' | 'test' | 'documentation' | 'dependency' | 'configuration' | 'historical' | 'risk';
 
 const nodeHeight = 92;
 const minNodeWidth = 170;
@@ -69,10 +70,26 @@ const relationshipStyles: Record<string, { color: string; label: string }> = {
   related_to: { color: '#9ca3af', label: 'related_to' },
 };
 
+const nodeTypeOptions: Array<{ value: NodeTypeFilter; label: string }> = [
+  { value: 'all', label: 'All' },
+  { value: 'source', label: 'Source' },
+  { value: 'test', label: 'Test' },
+  { value: 'documentation', label: 'Documentation' },
+  { value: 'dependency', label: 'Dependency' },
+  { value: 'configuration', label: 'Configuration' },
+  { value: 'historical', label: 'Historical' },
+  { value: 'risk', label: 'Risk' },
+];
+
 const deriveNodeType = (value?: string): string => {
   const normalized = (value ?? 'other').toLowerCase();
   if (normalized in typePalette) return normalized;
   return 'other';
+};
+
+const formatNodeType = (value?: string): string => {
+  const normalized = deriveNodeType(value);
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 };
 
 function estimateNodeWidth(label: string, nodeType: string) {
@@ -105,7 +122,7 @@ function getGraphLayout(graph: GraphData) {
     rankdir: largeGraph ? 'LR' : 'TB',
     align: 'UL',
     nodesep: largeGraph ? 60 : 70,
-    ranksep: largeGraph ? 130 : 150,
+    ranksep: largeGraph ? 120 : 150,
     marginx: 80,
     marginy: 70,
     acyclicer: true,
@@ -128,16 +145,16 @@ function getGraphLayout(graph: GraphData) {
   });
 
   nodes.forEach((node) => {
-    const width = typeof node.measured?.width === 'number' ? node.measured.width : estimateNodeWidth(String(node.data?.label ?? ''), String(node.data?.nodeType ?? 'artifact'));
+    const width =
+      typeof node.measured?.width === 'number'
+        ? node.measured.width
+        : estimateNodeWidth(String(node.data?.label ?? ''), String(node.data?.nodeType ?? 'artifact'));
     dagreGraph.setNode(node.id, { width, height: nodeHeight });
   });
 
   const edges: Edge[] = graph.edges.map((edge) => {
     const relationship = edge.relationship ?? 'related_to';
-    const style = relationshipStyles[relationship] ?? {
-      color: '#a5b4fc',
-      label: relationship,
-    };
+    const style = relationshipStyles[relationship] ?? { color: '#a5b4fc', label: relationship };
     return {
       id: edge.id ?? `${edge.source}-${edge.target}-${relationship}`,
       source: edge.source,
@@ -273,7 +290,19 @@ function AnalysisOverview({ graph, error }: { graph: GraphData; error?: string }
   );
 }
 
-function Inspector({ selectedNode, selectedEdge }: { selectedNode: any; selectedEdge: any }) {
+function Inspector({
+  selectedNode,
+  selectedEdge,
+  allNodes,
+  allEdges,
+}: {
+  selectedNode: Node | null;
+  selectedEdge: Edge | null;
+  allNodes: Node[];
+  allEdges: Edge[];
+}) {
+  const nodeLookup = useMemo(() => new Map(allNodes.map((node) => [node.id, node])), [allNodes]);
+
   if (!selectedNode && !selectedEdge) {
     return (
       <aside className="inspector empty-state">
@@ -284,7 +313,10 @@ function Inspector({ selectedNode, selectedEdge }: { selectedNode: any; selected
   }
 
   if (selectedEdge) {
-    const evidence = selectedEdge.data?.evidence ?? [];
+    const evidence = Array.isArray(selectedEdge.data?.evidence) ? selectedEdge.data.evidence : [];
+    const sourceNode = nodeLookup.get(selectedEdge.source);
+    const targetNode = nodeLookup.get(selectedEdge.target);
+
     return (
       <aside className="inspector">
         <div className="panel-title">RELATIONSHIP</div>
@@ -294,11 +326,15 @@ function Inspector({ selectedNode, selectedEdge }: { selectedNode: any; selected
         </div>
         <div className="inspector-section">
           <div className="field-label">Source</div>
-          <div>{selectedEdge.source}</div>
+          <div>{sourceNode?.data?.label ?? selectedEdge.source}</div>
         </div>
         <div className="inspector-section">
           <div className="field-label">Target</div>
-          <div>{selectedEdge.target}</div>
+          <div>{targetNode?.data?.label ?? selectedEdge.target}</div>
+        </div>
+        <div className="inspector-section">
+          <div className="field-label">Confidence</div>
+          <div>{selectedEdge.data?.confidence || 'confirmed'}</div>
         </div>
         <div className="inspector-section">
           <div className="field-label">Description</div>
@@ -318,23 +354,56 @@ function Inspector({ selectedNode, selectedEdge }: { selectedNode: any; selected
   }
 
   const metadata = selectedNode?.data?.metadata ?? {};
-  const evidence = metadata.evidence ?? selectedNode?.data?.description ? [{ description: selectedNode.data.description }] : [];
+  const connectedEdges = allEdges.filter((edge) => edge.source === selectedNode!.id || edge.target === selectedNode!.id);
+  const connectedTypes = new Set<string>();
+  connectedEdges.forEach((edge) => {
+    const otherId = edge.source === selectedNode!.id ? edge.target : edge.source;
+    const otherNode = nodeLookup.get(otherId);
+    const otherType = String(otherNode?.data?.nodeType ?? 'other');
+    if (otherType) connectedTypes.add(otherType);
+  });
+  const evidence = Array.isArray(metadata.evidence)
+    ? metadata.evidence
+    : selectedNode?.data?.description
+      ? [{ description: selectedNode.data.description, evidence_type: 'DIRECT' }]
+      : [];
 
   return (
     <aside className="inspector">
-      <div className="panel-title">{(selectedNode.data?.nodeType || 'ARTIFACT').toUpperCase()}</div>
+      <div className="panel-title">{(selectedNode?.data?.nodeType || 'ARTIFACT').toUpperCase()}</div>
       <div className="inspector-section">
         <div className="field-label">Label</div>
-        <div>{selectedNode.data?.label || selectedNode.id}</div>
+        <div>{selectedNode?.data?.label || selectedNode?.id}</div>
+      </div>
+      <div className="inspector-section">
+        <div className="field-label">Type</div>
+        <div>{formatNodeType(selectedNode?.data?.nodeType)}</div>
       </div>
       <div className="inspector-section">
         <div className="field-label">Description</div>
-        <div>{selectedNode.data?.description || 'No description available.'}</div>
+        <div>{selectedNode?.data?.description || 'No description available.'}</div>
       </div>
-      {selectedNode.data?.riskSeverity ? (
+      <div className="inspector-section">
+        <div className="field-label">Relationship count</div>
+        <div>{connectedEdges.length}</div>
+      </div>
+      <div className="inspector-section">
+        <div className="field-label">Connected node types</div>
+        <div>{connectedTypes.size ? Array.from(connectedTypes).map((type) => formatNodeType(type)).join(', ') : 'None'}</div>
+      </div>
+      {selectedNode?.data?.riskSeverity ? (
         <div className="inspector-section">
           <div className="field-label">Risk</div>
           <div>{selectedNode.data.riskSeverity.toUpperCase()}</div>
+        </div>
+      ) : null}
+      {selectedNode?.data?.metadata?.commit_count || selectedNode?.data?.metadata?.latest_commit ? (
+        <div className="inspector-section">
+          <div className="field-label">Historical</div>
+          <div>
+            {selectedNode.data.metadata.commit_count ? `${selectedNode.data.metadata.commit_count} commits` : 'Git history linked'}
+            {selectedNode.data.metadata.latest_commit ? ` · latest ${selectedNode.data.metadata.latest_commit}` : ''}
+          </div>
         </div>
       ) : null}
       <div className="inspector-section">
@@ -383,7 +452,12 @@ function App({ graph, error }: AppProps) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [riskFocus, setRiskFocus] = useState(false);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [typeFilter, setTypeFilter] = useState<NodeTypeFilter>('all');
+  const [relationshipFilter, setRelationshipFilter] = useState<string>('all');
+  const [focusedNodeIds, setFocusedNodeIds] = useState<string[]>([]);
+  const [focusedEdgeIds, setFocusedEdgeIds] = useState<string[]>([]);
+  const [statusMessage, setStatusMessage] = useState<string | null>('Change impact map loaded');
   const { nodes: initialNodes, edges: initialEdges } = useMemo(() => getGraphLayout(graph), [graph]);
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
@@ -392,39 +466,134 @@ function App({ graph, error }: AppProps) {
   const selectedNode = nodes.find((node) => node.id === selectedNodeId) ?? null;
   const selectedEdge = edges.find((edge) => edge.id === selectedEdgeId) ?? null;
 
-  const handleFit = useCallback(() => {
-    if (flowReady) {
-      const flow = (window as any).__DEVFLOW_INSTANCE__;
-      if (flow) {
-        const padding = graph.nodes.length > 100 ? 0.18 : 0.22;
-        flow.fitView({ padding, duration: 220 });
-      }
+  const applyVisualState = useCallback(() => {
+    const activeNodeSet = new Set<string>();
+    if (selectedNodeId) {
+      activeNodeSet.add(selectedNodeId);
+      initialEdges.forEach((edge) => {
+        if (edge.source === selectedNodeId || edge.target === selectedNodeId) {
+          activeNodeSet.add(edge.source);
+          activeNodeSet.add(edge.target);
+        }
+      });
     }
-  }, [flowReady, graph.nodes.length]);
+    focusedNodeIds.forEach((id) => activeNodeSet.add(id));
+
+    const relatedEdgeSet = new Set<string>();
+    if (selectedNodeId) {
+      initialEdges.forEach((edge) => {
+        if (edge.source === selectedNodeId || edge.target === selectedNodeId) {
+          relatedEdgeSet.add(edge.id ?? `${edge.source}-${edge.target}-${edge.relationship ?? 'related'}`);
+        }
+      });
+    }
+    focusedEdgeIds.forEach((id) => relatedEdgeSet.add(id));
+
+    const searchText = searchTerm.trim().toLowerCase();
+    const nodeMatchSet = new Set<string>();
+    const edgeMatchSet = new Set<string>();
+    if (searchText) {
+      initialNodes.forEach((node) => {
+        const candidate = [node.data?.label, node.data?.nodeType, node.data?.description, node.data?.metadata?.path, node.data?.metadata?.artifact_kind]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        if (candidate.includes(searchText)) nodeMatchSet.add(node.id);
+      });
+      initialEdges.forEach((edge) => {
+        const candidate = [edge.data?.relationship, edge.data?.description, edge.data?.confidence, edge.source, edge.target]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        if (candidate.includes(searchText)) edgeMatchSet.add(edge.id ?? `${edge.source}-${edge.target}-${edge.data?.relationship ?? 'related'}`);
+      });
+    }
+
+    setNodes(
+      initialNodes.map((node) => {
+        const nodeType = String(node.data?.nodeType ?? 'other');
+        const isVisible = typeFilter === 'all' || nodeType === typeFilter;
+        const isSelected = node.id === selectedNodeId;
+        const isRelated = activeNodeSet.has(node.id);
+        const isMatched = !searchText || nodeMatchSet.has(node.id);
+        const isRisk = nodeType === 'risk';
+        const shouldDim = selectedNodeId ? !isSelected && !isRelated && !isMatched && !isRisk : !isMatched && !isRisk && !!searchText;
+        const shouldFilterDim = typeFilter !== 'all' && !isVisible && !isSelected;
+        const opacity = shouldFilterDim || shouldDim ? 0.16 : isSelected || isRelated || isRisk || !searchText ? 1 : 0.72;
+        const borderColor = isSelected ? '#f8fafc' : isRelated ? '#60a5fa' : isRisk ? '#f87171' : undefined;
+        const boxShadow = isSelected ? '0 0 0 2px rgba(96,165,250,.5)' : isRelated ? '0 0 0 1px rgba(96,165,250,.4)' : 'none';
+        return {
+          ...node,
+          style: {
+            ...node.style,
+            opacity,
+            borderColor,
+            boxShadow,
+          },
+        };
+      }),
+    );
+
+    setEdges(
+      initialEdges.map((edge) => {
+        const edgeId = edge.id ?? `${edge.source}-${edge.target}-${edge.data?.relationship ?? 'related'}`;
+        const relationship = String(edge.data?.relationship ?? 'related_to');
+        const isSelected = edgeId === selectedEdgeId;
+        const isRelated = selectedNodeId ? edge.source === selectedNodeId || edge.target === selectedNodeId : false;
+        const isVisible = relationshipFilter === 'all' || relationship === relationshipFilter;
+        const isMatched = !searchText || edgeMatchSet.has(edgeId);
+        const isRiskEdge = relationship === 'has_risk' || relationship === 'risk_for';
+        const dim = !isVisible || (!isSelected && !isRelated && !isMatched && !!searchText && !riskFocus);
+        const opacity = dim ? 0.2 : isSelected || isRelated || isRiskEdge || riskFocus ? 1 : 0.72;
+        const stroke = relationshipStyles[relationship]?.color ?? '#a5b4fc';
+        return {
+          ...edge,
+          style: { stroke, strokeWidth: isSelected ? 3.5 : isRiskEdge ? 3 : 2, opacity },
+          animated: isSelected || (riskFocus && isRiskEdge),
+          label: isVisible ? relationshipStyles[relationship]?.label ?? relationship : '',
+        };
+      }),
+    );
+  }, [focusedEdgeIds, focusedNodeIds, initialEdges, initialNodes, relationshipFilter, riskFocus, searchTerm, selectedEdgeId, selectedNodeId, typeFilter]);
+
+  const handleFit = useCallback(() => {
+    if (!flowReady) return;
+    const flow = (window as any).__DEVFLOW_INSTANCE__;
+    if (!flow) return;
+    const focusedNodes = selectedNodeId
+      ? initialNodes.filter((node) => node.id === selectedNodeId || focusedNodeIds.includes(node.id))
+      : initialNodes;
+    const padding = graph.nodes.length > 100 ? 0.18 : 0.22;
+    flow.fitView({ padding, duration: 220, nodes: focusedNodes.length ? focusedNodes : undefined });
+  }, [flowReady, focusedNodeIds, graph.nodes.length, initialNodes, selectedNodeId]);
+
+  useEffect(() => {
+    applyVisualState();
+  }, [applyVisualState]);
 
   const resetGraph = useCallback(() => {
-    setNodes(initialNodes);
-    setEdges(initialEdges);
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
     setRiskFocus(false);
-    setStatusMessage(null);
-    handleFit();
+    setSearchTerm('');
+    setTypeFilter('all');
+    setRelationshipFilter('all');
+    setFocusedNodeIds([]);
+    setFocusedEdgeIds([]);
+    setStatusMessage('Graph reset');
+    setNodes(initialNodes);
+    setEdges(initialEdges);
+    setTimeout(() => handleFit(), 0);
   }, [handleFit, initialEdges, initialNodes]);
 
   const handleFocusRisks = useCallback(() => {
-    const riskIds = new Set(
-      initialNodes.filter((node) => node.data?.nodeType === 'risk').map((node) => node.id),
-    );
-
+    const riskIds = new Set(initialNodes.filter((node) => node.data?.nodeType === 'risk').map((node) => node.id));
     if (!riskIds.size) {
       setRiskFocus(false);
       setStatusMessage('No risk findings found for this change.');
       return;
     }
 
-    setRiskFocus(true);
-    setStatusMessage(null);
     const relatedIds = new Set<string>();
     initialEdges.forEach((edge) => {
       if (riskIds.has(edge.source) || riskIds.has(edge.target)) {
@@ -432,82 +601,86 @@ function App({ graph, error }: AppProps) {
         relatedIds.add(edge.target);
       }
     });
-    setNodes((current) =>
-      current.map((node) => {
-        const isRisk = riskIds.has(node.id);
-        const isRelated = relatedIds.has(node.id);
-        const opacity = isRisk || isRelated || !selectedNodeId ? 1 : 0.2;
-        return { ...node, style: { ...node.style, opacity } };
-      }),
-    );
-    setEdges((current) =>
-      current.map((edge) => {
-        const shouldHighlight = riskIds.has(edge.source) || riskIds.has(edge.target);
-        return {
-          ...edge,
-          style: { ...edge.style, opacity: shouldHighlight ? 1 : 0.25 },
-          animated: shouldHighlight,
-        };
-      }),
-    );
-  }, [initialEdges, initialNodes, selectedNodeId]);
 
-  const onNodeClick = useCallback((_event: any, node: Node) => {
-    setSelectedEdgeId(null);
-    setSelectedNodeId(node.id);
-    setRiskFocus(false);
-    setStatusMessage(null);
-    setNodes((current) =>
-      current.map((item) => ({
-        ...item,
-        style: {
-          ...item.style,
-          opacity: item.id === node.id || item.id === selectedNodeId ? 1 : 0.6,
-        },
-      })),
-    );
-    setEdges((current) =>
-      current.map((edge) => {
-        const isConnected = edge.source === node.id || edge.target === node.id;
-        return {
-          ...edge,
-          style: { ...edge.style, opacity: isConnected ? 1 : 0.35 },
-          animated: isConnected,
-        };
-      }),
-    );
-  }, [selectedNodeId]);
-
-  const onEdgeClick = useCallback((_event: any, edge: Edge) => {
+    setRiskFocus(true);
+    setFocusedNodeIds(Array.from(relatedIds));
+    setFocusedEdgeIds([]);
     setSelectedNodeId(null);
-    setSelectedEdgeId(edge.id);
-    setRiskFocus(false);
-    setStatusMessage(null);
-    setEdges((current) =>
-      current.map((item) => ({
-        ...item,
-        style: {
-          ...item.style,
-          opacity: item.id === edge.id ? 1 : 0.4,
-        },
-      })),
-    );
-  }, []);
+    setSelectedEdgeId(null);
+    setStatusMessage('Risk-focused view');
+    setTimeout(() => handleFit(), 0);
+  }, [handleFit, initialEdges, initialNodes]);
+
+  const handleExploreConnections = useCallback(() => {
+    if (!selectedNodeId) {
+      setStatusMessage('Select a node to explore its neighborhood.');
+      return;
+    }
+
+    const neighborIds = new Set<string>();
+    const neighborEdgeIds = new Set<string>();
+    initialEdges.forEach((edge) => {
+      if (edge.source === selectedNodeId || edge.target === selectedNodeId) {
+        neighborIds.add(edge.source);
+        neighborIds.add(edge.target);
+        neighborEdgeIds.add(edge.id ?? `${edge.source}-${edge.target}-${edge.data?.relationship ?? 'related'}`);
+      }
+    });
+    setFocusedNodeIds(Array.from(neighborIds));
+    setFocusedEdgeIds(Array.from(neighborEdgeIds));
+    setStatusMessage('Exploring local neighborhood');
+    setTimeout(() => handleFit(), 0);
+  }, [handleFit, initialEdges, selectedNodeId]);
+
+  const focusSelectedNode = useCallback(() => {
+    if (!selectedNodeId) return;
+    setStatusMessage('Focused on selected node');
+    setTimeout(() => handleFit(), 0);
+  }, [handleFit, selectedNodeId]);
+
+  const onNodeClick = useCallback(
+    (_event: any, node: Node) => {
+      setSelectedEdgeId(null);
+      setSelectedNodeId(node.id);
+      setFocusedNodeIds([]);
+      setFocusedEdgeIds([]);
+      setRiskFocus(false);
+      setStatusMessage(`${node.data?.label ?? node.id} selected`);
+    },
+    [],
+  );
+
+  const onEdgeClick = useCallback(
+    (_event: any, edge: Edge) => {
+      setSelectedNodeId(null);
+      setSelectedEdgeId(edge.id ?? `${edge.source}-${edge.target}-${edge.data?.relationship ?? 'related'}`);
+      setFocusedNodeIds([]);
+      setFocusedEdgeIds([]);
+      setRiskFocus(false);
+      setStatusMessage(`${edge.data?.relationship ?? 'relationship'} selected`);
+    },
+    [],
+  );
 
   const onPaneClick = useCallback(() => {
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
+    setFocusedNodeIds([]);
+    setFocusedEdgeIds([]);
     setRiskFocus(false);
-    setStatusMessage(null);
-    resetGraph();
-  }, [resetGraph]);
+    setStatusMessage('Graph view restored');
+    setTimeout(() => handleFit(), 0);
+  }, [handleFit]);
 
-  const onInit = useCallback((instance: any) => {
-    (window as any).__DEVFLOW_INSTANCE__ = instance;
-    setFlowReady(true);
-    const padding = graph.nodes.length > 100 ? 0.18 : 0.24;
-    instance.fitView({ padding, duration: 180 });
-  }, [graph.nodes.length]);
+  const onInit = useCallback(
+    (instance: any) => {
+      (window as any).__DEVFLOW_INSTANCE__ = instance;
+      setFlowReady(true);
+      const padding = graph.nodes.length > 100 ? 0.18 : 0.24;
+      instance.fitView({ padding, duration: 180 });
+    },
+    [graph.nodes.length],
+  );
 
   if (error && graph.nodes.length === 0) {
     return (
@@ -527,7 +700,7 @@ function App({ graph, error }: AppProps) {
           <div className="error-message">NO ANALYSIS LOADED</div>
           <div className="error-detail">Run: python -m devflow to generate a Change Impact Map.</div>
         </div>
-        <Inspector selectedNode={null} selectedEdge={null} />
+        <Inspector selectedNode={null} selectedEdge={null} allNodes={[]} allEdges={[]} />
       </div>
     );
   }
@@ -540,7 +713,7 @@ function App({ graph, error }: AppProps) {
           <div className="error-message">Unable to load Phase 6 graph data.</div>
           <div className="error-detail">{error}</div>
         </div>
-        <Inspector selectedNode={null} selectedEdge={null} />
+        <Inspector selectedNode={null} selectedEdge={null} allNodes={[]} allEdges={[]} />
       </div>
     );
   }
@@ -549,11 +722,44 @@ function App({ graph, error }: AppProps) {
     <div className="app-shell">
       <AnalysisOverview graph={graph} error={error} />
       <div className="graph-panel">
-        <div className="toolbar">
-          <button type="button" onClick={handleFit}>Fit</button>
-          <button type="button" onClick={resetGraph}>Reset</button>
-          <button type="button" onClick={handleFocusRisks}>Focus Risks</button>
-          <button type="button" onClick={resetGraph}>Show All</button>
+        <div className="toolbar toolbar-advanced">
+          <div className="toolbar-search-box">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search nodes, paths, relationships..."
+              aria-label="Search graph"
+            />
+          </div>
+          <div className="toolbar-actions">
+            <button type="button" onClick={focusSelectedNode} disabled={!selectedNodeId}>Focus Node</button>
+            <button type="button" onClick={handleExploreConnections} disabled={!selectedNodeId}>Explore Connections</button>
+            <button type="button" onClick={handleFit}>Fit</button>
+            <button type="button" onClick={resetGraph}>Reset</button>
+            <button type="button" onClick={handleFocusRisks}>Focus Risks</button>
+            <button type="button" onClick={resetGraph}>Show All</button>
+          </div>
+          <div className="toolbar-filter-group">
+            {nodeTypeOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className={typeFilter === option.value ? 'active' : ''}
+                onClick={() => setTypeFilter(option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <div className="toolbar-relationship-filter">
+            <select value={relationshipFilter} onChange={(event) => setRelationshipFilter(event.target.value)} aria-label="Relationship filter">
+              <option value="all">All relationships</option>
+              {Object.keys(relationshipStyles).map((key) => (
+                <option key={key} value={key}>{key}</option>
+              ))}
+            </select>
+          </div>
         </div>
         {statusMessage ? <div className="graph-status">{statusMessage}</div> : null}
         <ReactFlowProvider>
@@ -581,7 +787,7 @@ function App({ graph, error }: AppProps) {
         </ReactFlowProvider>
         <Legend />
       </div>
-      <Inspector selectedNode={selectedNode} selectedEdge={selectedEdge} />
+      <Inspector selectedNode={selectedNode} selectedEdge={selectedEdge} allNodes={initialNodes} allEdges={initialEdges} />
     </div>
   );
 }

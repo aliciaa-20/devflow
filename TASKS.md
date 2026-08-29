@@ -466,6 +466,8 @@ The Change Impact Map uses a real Dagre-based hierarchical layout tuned for both
 
 The Change Impact Map is the primary visual experience of DevFlow.
 
+Phase 6 enhancement: interactive graph exploration is now supported without altering the underlying real GraphData pipeline. The map preserves the existing change-centric semantics while adding smooth zoom/pan, node and edge selection, neighborhood exploration, search, type filters, risk-focused view, and richer inspector details from the real graph evidence.
+
 PHASE 7
 
 Developer Report

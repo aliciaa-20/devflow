@@ -164,7 +164,7 @@ class DevFlowRequestHandler(BaseHTTPRequestHandler):
 
             if file_path.is_file() and file_path.resolve().parent.resolve() == dist_dir.resolve():
                 self.send_response(200)
-                if path.endswith(".html"):
+                if path == "/" or path.endswith(".html"):
                     self.send_header("Content-type", "text/html")
                 elif path.endswith(".js"):
                     self.send_header("Content-type", "application/javascript")
