@@ -9,6 +9,7 @@ from devflow.input import accept_input
 from devflow.map import build_change_impact_map, open_html_in_browser, write_frontend_graph_payload
 from devflow.models.change import ChangeRequestError
 from devflow.models.repository import RepositoryInputError
+from devflow.report import build_developer_report, write_frontend_report_payload
 from devflow.risk import build_risk_analysis
 from devflow.server import serve_forever, start_server
 
@@ -48,8 +49,10 @@ def _analyze_repository(repository_url: str, change_description: str):
     if graph.error:
         raise ValueError(graph.error)
 
+    report = build_developer_report(context, impact, risk, history)
     write_frontend_graph_payload(graph)
-    return graph
+    write_frontend_report_payload(report)
+    return graph, report
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -71,7 +74,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print('Analyzing repository...')
     try:
-        graph = _analyze_repository(repository_url, change_description)
+        graph, _report = _analyze_repository(repository_url, change_description)
     except (RepositoryInputError, ChangeRequestError, ValueError) as exc:
         print(f'Error: {exc}')
         return 1

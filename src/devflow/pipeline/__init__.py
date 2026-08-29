@@ -6,6 +6,6 @@
 # Phase 4:  Impact Analysis                  [COMPLETE — see devflow.impact]
 # Phase 5:  Risk Analysis                    [COMPLETE — see devflow.risk]
 # Phase 6:  Change Impact Map                [COMPLETE — see devflow.map]
-# Phase 7:  Developer Report
+# Phase 7:  Developer Report                 [COMPLETE — see devflow.report]
 # Phase 8:  Bob Resolution
 # Phase 9:  Validation

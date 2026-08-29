@@ -12,6 +12,7 @@ import {
   ReactFlowProvider,
 } from '@xyflow/react';
 import dagre from '@dagrejs/dagre';
+import ReportPanel, { type ReportData } from './ReportPanel';
 
 export type GraphData = {
   repository_url?: string;
@@ -37,7 +38,7 @@ export type GraphData = {
   }>;
 };
 
-type AppProps = { graph: GraphData; error?: string };
+type AppProps = { graph: GraphData; report?: ReportData; error?: string };
 type NodeTypeFilter = 'all' | 'change' | 'source' | 'test' | 'documentation' | 'dependency' | 'configuration' | 'historical' | 'risk';
 
 const nodeHeight = 92;
@@ -238,7 +239,17 @@ function RiskNode(props: NodeProps) {
   );
 }
 
-function AnalysisOverview({ graph, error }: { graph: GraphData; error?: string }) {
+function AnalysisOverview({
+  graph,
+  report,
+  error,
+  onSelectGraphNode,
+}: {
+  graph: GraphData;
+  report?: ReportData;
+  error?: string;
+  onSelectGraphNode?: (nodeId: string) => void;
+}) {
   const riskCount = graph.nodes.filter((node) => (node.node_type || '').toLowerCase() === 'risk').length;
   const artifactCount = graph.nodes.filter((node) => {
     const type = (node.node_type || '').toLowerCase();
@@ -286,6 +297,7 @@ function AnalysisOverview({ graph, error }: { graph: GraphData; error?: string }
           </div>
         </div>
       )}
+      {report && !error ? <ReportPanel report={report} onSelectGraphNode={onSelectGraphNode} /> : null}
     </aside>
   );
 }
@@ -448,7 +460,7 @@ function Legend() {
   );
 }
 
-function App({ graph, error }: AppProps) {
+function App({ graph, report, error }: AppProps) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [riskFocus, setRiskFocus] = useState(false);
@@ -638,6 +650,20 @@ function App({ graph, error }: AppProps) {
     setTimeout(() => handleFit(), 0);
   }, [handleFit, selectedNodeId]);
 
+  const handleReportNodeSelect = useCallback(
+    (nodeId: string) => {
+      setSelectedEdgeId(null);
+      setSelectedNodeId(nodeId);
+      setFocusedNodeIds([]);
+      setFocusedEdgeIds([]);
+      setRiskFocus(false);
+      const label = initialNodes.find((node) => node.id === nodeId)?.data?.label ?? nodeId;
+      setStatusMessage(`Report linked to ${label}`);
+      setTimeout(() => handleFit(), 0);
+    },
+    [handleFit, initialNodes],
+  );
+
   const onNodeClick = useCallback(
     (_event: any, node: Node) => {
       setSelectedEdgeId(null);
@@ -708,7 +734,7 @@ function App({ graph, error }: AppProps) {
   if (error) {
     return (
       <div className="app-shell">
-        <AnalysisOverview graph={graph} error={error} />
+        <AnalysisOverview graph={graph} report={report} error={error} onSelectGraphNode={handleReportNodeSelect} />
         <div className="graph-panel error-panel">
           <div className="error-message">Unable to load Phase 6 graph data.</div>
           <div className="error-detail">{error}</div>
@@ -720,7 +746,7 @@ function App({ graph, error }: AppProps) {
 
   return (
     <div className="app-shell">
-      <AnalysisOverview graph={graph} error={error} />
+      <AnalysisOverview graph={graph} report={report} error={error} onSelectGraphNode={handleReportNodeSelect} />
       <div className="graph-panel">
         <div className="toolbar toolbar-advanced">
           <div className="toolbar-search-box">
@@ -792,6 +818,6 @@ function App({ graph, error }: AppProps) {
   );
 }
 
-export default function AppRoot({ graph, error }: AppProps) {
-  return <App graph={graph} error={error} />;
+export default function AppRoot({ graph, report, error }: AppProps) {
+  return <App graph={graph} report={report} error={error} />;
 }

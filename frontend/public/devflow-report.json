@@ -1,0 +1,1076 @@
+{
+  "repository_url": "https://github.com/pallets/flask",
+  "owner": "pallets",
+  "name": "flask",
+  "change_summary": "Refactor request context handling.",
+  "changed_files": [],
+  "error": null,
+  "generated_at": "2026-08-29T15:09:16Z",
+  "sections": {
+    "change": {
+      "summary": "Refactor request context handling.",
+      "changed_files": []
+    },
+    "context": {
+      "artifact_count": 3,
+      "findings": [
+        {
+          "id": "context:src/flask/ctx.py",
+          "category": "context",
+          "title": "src/flask/ctx.py",
+          "description": "path keywords ['ctx'] match change keywords",
+          "affected_artifacts": [
+            "src/flask/ctx.py"
+          ],
+          "relationship": null,
+          "potential_impact": null,
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "path keywords ['ctx'] match change keywords",
+              "evidence_type": "DERIVED_RELATIONSHIP",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/ctx.py"
+        },
+        {
+          "id": "context:tests/templates/context_template.html",
+          "category": "context",
+          "title": "tests/templates/context_template.html",
+          "description": "path keywords ['context'] match change keywords",
+          "affected_artifacts": [
+            "tests/templates/context_template.html"
+          ],
+          "relationship": null,
+          "potential_impact": null,
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "tests/templates/context_template.html",
+              "description": "path keywords ['context'] match change keywords",
+              "evidence_type": "DERIVED_RELATIONSHIP",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:tests/templates/context_template.html"
+        },
+        {
+          "id": "context:tests/test_request.py",
+          "category": "context",
+          "title": "tests/test_request.py",
+          "description": "path keywords ['request'] match change keywords",
+          "affected_artifacts": [
+            "tests/test_request.py"
+          ],
+          "relationship": null,
+          "potential_impact": null,
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "tests/test_request.py",
+              "description": "path keywords ['request'] match change keywords",
+              "evidence_type": "DERIVED_RELATIONSHIP",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:tests/test_request.py"
+        }
+      ]
+    },
+    "impact": {
+      "finding_count": 6,
+      "findings": [
+        {
+          "id": "impact:src/flask/ctx.py:impacts",
+          "category": "impact",
+          "title": "src/flask/ctx.py",
+          "description": "Source file 'src/flask/ctx.py' may be affected by the change ('Refactor request context handling.').",
+          "affected_artifacts": [
+            "src/flask/ctx.py"
+          ],
+          "relationship": "impacts",
+          "potential_impact": "Source file 'src/flask/ctx.py' may be affected by the change ('Refactor request context handling.').",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "Phase 2 identified 'src/flask/ctx.py' as relevant (reason: keyword_match; confidence: likely). Evidence: path keywords ['ctx'] match change keywords",
+              "evidence_type": "DERIVED_RELATIONSHIP",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/ctx.py"
+        },
+        {
+          "id": "impact:src/flask/ctx.py:historically_changed_with",
+          "category": "impact",
+          "title": "src/flask/ctx.py",
+          "description": "'src/flask/ctx.py' has 12 recorded commit(s) in the repository history relevant to this area of the codebase.",
+          "affected_artifacts": [
+            "src/flask/ctx.py"
+          ],
+          "relationship": "historically_changed_with",
+          "potential_impact": "'src/flask/ctx.py' has 12 recorded commit(s) in the repository history relevant to this area of the codebase.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "Git commit 06ea505 modified 'src/flask/ctx.py': 'separate copy per call' (DIRECT_EVIDENCE: git log).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "Git commit a29f88c modified 'src/flask/ctx.py': 'document that headers must be set before streaming' (DIRECT_EVIDENCE: git log).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "Git commit fbb6f0b modified 'src/flask/ctx.py': 'all teardown callbacks are called despite errors' (DIRECT_EVIDENCE: git log).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/ctx.py"
+        },
+        {
+          "id": "impact:tests/templates/context_template.html:historically_changed_with",
+          "category": "impact",
+          "title": "tests/templates/context_template.html",
+          "description": "'tests/templates/context_template.html' has 4 recorded commit(s) in the repository history relevant to this area of the codebase.",
+          "affected_artifacts": [
+            "tests/templates/context_template.html"
+          ],
+          "relationship": "historically_changed_with",
+          "potential_impact": "'tests/templates/context_template.html' has 4 recorded commit(s) in the repository history relevant to this area of the codebase.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "tests/templates/context_template.html",
+              "description": "Git commit e3535f9 modified 'tests/templates/context_template.html': 'Bump actions/checkout from 4.1.4 to 4.1.6 in the github-actions group' (DIRECT_EVIDENCE: git log).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            },
+            {
+              "artifact": "tests/templates/context_template.html",
+              "description": "Git commit 422e05e modified 'tests/templates/context_template.html': 'Bump the python-requirements group in /requirements with 3 updates (#5492)' (refs: #5492) (DIRECT_EVIDENCE: git log).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            },
+            {
+              "artifact": "tests/templates/context_template.html",
+              "description": "Git commit 1af8f95 modified 'tests/templates/context_template.html': 'fix super call in list comprehension' (DIRECT_EVIDENCE: git log).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:tests/templates/context_template.html"
+        },
+        {
+          "id": "impact:tests/test_request.py:historically_changed_with",
+          "category": "impact",
+          "title": "tests/test_request.py",
+          "description": "'tests/test_request.py' has 2 recorded commit(s) in the repository history relevant to this area of the codebase.",
+          "affected_artifacts": [
+            "tests/test_request.py"
+          ],
+          "relationship": "historically_changed_with",
+          "potential_impact": "'tests/test_request.py' has 2 recorded commit(s) in the repository history relevant to this area of the codebase.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "tests/test_request.py",
+              "description": "Git commit 4f7156f modified 'tests/test_request.py': 'configure and check trusted_hosts' (DIRECT_EVIDENCE: git log).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            },
+            {
+              "artifact": "tests/test_request.py",
+              "description": "Git commit c7a5388 modified 'tests/test_request.py': 'add config and docs for limits' (DIRECT_EVIDENCE: git log).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:tests/test_request.py"
+        },
+        {
+          "id": "impact:tests/templates/context_template.html:tested_by",
+          "category": "impact",
+          "title": "tests/templates/context_template.html",
+          "description": "Test 'tests/templates/context_template.html' may need review after the change.",
+          "affected_artifacts": [
+            "tests/templates/context_template.html"
+          ],
+          "relationship": "tested_by",
+          "potential_impact": "Test 'tests/templates/context_template.html' may need review after the change.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "tests/templates/context_template.html",
+              "description": "Test file 'tests/templates/context_template.html' was identified as relevant by Phase 2 (reason: keyword_match). No source-stem match found; relationship is inferred.",
+              "evidence_type": "INFERENCE",
+              "confidence": "possible"
+            }
+          ],
+          "evidence_strength": "possible",
+          "is_inference": true,
+          "recommendation": null,
+          "graph_node_id": "artifact:tests/templates/context_template.html"
+        },
+        {
+          "id": "impact:tests/test_request.py:tested_by",
+          "category": "impact",
+          "title": "tests/test_request.py",
+          "description": "Test 'tests/test_request.py' may need review after the change.",
+          "affected_artifacts": [
+            "tests/test_request.py"
+          ],
+          "relationship": "tested_by",
+          "potential_impact": "Test 'tests/test_request.py' may need review after the change.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "tests/test_request.py",
+              "description": "Test file 'tests/test_request.py' was identified as relevant by Phase 2 (reason: keyword_match). No source-stem match found; relationship is inferred.",
+              "evidence_type": "INFERENCE",
+              "confidence": "possible"
+            }
+          ],
+          "evidence_strength": "possible",
+          "is_inference": true,
+          "recommendation": null,
+          "graph_node_id": "artifact:tests/test_request.py"
+        }
+      ]
+    },
+    "history": {
+      "finding_count": 3,
+      "findings": [
+        {
+          "id": "history:src/flask/ctx.py",
+          "category": "historical",
+          "title": "History: src/flask/ctx.py",
+          "description": "12 relevant commit(s): 06ea505 — separate copy per call — 2026-05-01 20:31:50 -0700; a29f88c — document that headers must be set before streaming — 2026-03-04 07:36:09 -0800; fbb6f0b — all teardown callbacks are called despite errors — 2026-02-19 19:41:50 -0800; a411a24 — add back opening session on context push — 2026-02-19 08:35:48 -0800; c17f379 — request context tracks session access — 2026-02-18 19:02:54 -0800; 6a64969 — pass context through dispatch methods — 2025-09-19 17:33:30 -0700; c2705ff — merge app and request context — 2025-09-19 16:43:53 -0700; f04c5e6 — update dev dependencies — 2025-06-08 09:52:11 -0700; e3535f9 — Bump actions/checkout from 4.1.4 to 4.1.6 in the github-actions group — 2024-06-01 15:55:45 +0000; 422e05e — Bump the python-requirements group in /requirements with 3 updates (#5492) — 2024-06-01 08:16:45 -0700; 1af8f95 — fix super call in list comprehension — 2024-02-03 12:36:06 -0800; 3435d2f — Fix jinja_loader typehint (#5389) — 2024-02-03 12:18:40 -0800",
+          "affected_artifacts": [
+            "src/flask/ctx.py"
+          ],
+          "relationship": null,
+          "potential_impact": null,
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "Git commit 06ea505 modified src/flask/ctx.py. Message: \"separate copy per call\". Author: David Lord. Date: 2026-05-01 20:31:50 -0700.",
+              "evidence_type": "direct_modification",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "Git commit a29f88c modified src/flask/ctx.py. Message: \"document that headers must be set before streaming\". Author: David Lord. Date: 2026-03-04 07:36:09 -0800.",
+              "evidence_type": "direct_modification",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "Git commit fbb6f0b modified src/flask/ctx.py. Message: \"all teardown callbacks are called despite errors\". Author: David Lord. Date: 2026-02-19 19:41:50 -0800.",
+              "evidence_type": "direct_modification",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "Git commit a411a24 modified src/flask/ctx.py. Message: \"add back opening session on context push\". Author: David Lord. Date: 2026-02-19 08:35:48 -0800.",
+              "evidence_type": "direct_modification",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "Git commit c17f379 modified src/flask/ctx.py. Message: \"request context tracks session access\". Author: David Lord. Date: 2026-02-18 19:02:54 -0800.",
+              "evidence_type": "direct_modification",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "Git commit 6a64969 modified src/flask/ctx.py. Message: \"pass context through dispatch methods\". Author: David Lord. Date: 2025-09-19 17:33:30 -0700.",
+              "evidence_type": "direct_modification",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "Git commit c2705ff modified src/flask/ctx.py. Message: \"merge app and request context\". Author: David Lord. Date: 2025-09-19 16:43:53 -0700.",
+              "evidence_type": "direct_modification",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "Git commit f04c5e6 modified src/flask/ctx.py. Message: \"update dev dependencies\". Author: David Lord. Date: 2025-06-08 09:52:11 -0700.",
+              "evidence_type": "direct_modification",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "Git commit e3535f9 modified src/flask/ctx.py. Message: \"Bump actions/checkout from 4.1.4 to 4.1.6 in the github-actions group\". Author: dependabot[bot]. Date: 2024-06-01 15:55:45 +0000.",
+              "evidence_type": "direct_modification",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "Git commit 422e05e modified src/flask/ctx.py. Message: \"Bump the python-requirements group in /requirements with 3 updates (#5492)\". Author: David Lord. Date: 2024-06-01 08:16:45 -0700.",
+              "evidence_type": "direct_modification",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "Git commit 1af8f95 modified src/flask/ctx.py. Message: \"fix super call in list comprehension\". Author: Tony Huang. Date: 2024-02-03 12:36:06 -0800.",
+              "evidence_type": "direct_modification",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "Git commit 3435d2f modified src/flask/ctx.py. Message: \"Fix jinja_loader typehint (#5389)\". Author: David Lord. Date: 2024-02-03 12:18:40 -0800.",
+              "evidence_type": "direct_modification",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "06ea505: separate copy per call",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "a29f88c: document that headers must be set before streaming",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "fbb6f0b: all teardown callbacks are called despite errors",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "a411a24: add back opening session on context push",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "c17f379: request context tracks session access",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "6a64969: pass context through dispatch methods",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "c2705ff: merge app and request context",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "f04c5e6: update dev dependencies",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "e3535f9: Bump actions/checkout from 4.1.4 to 4.1.6 in the github-actions group",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "422e05e: Bump the python-requirements group in /requirements with 3 updates (#5492)",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "1af8f95: fix super call in list comprehension",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "3435d2f: Fix jinja_loader typehint (#5389)",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            }
+          ],
+          "evidence_strength": "confirmed",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "history:src/flask/ctx.py"
+        },
+        {
+          "id": "history:tests/templates/context_template.html",
+          "category": "historical",
+          "title": "History: tests/templates/context_template.html",
+          "description": "4 relevant commit(s): e3535f9 — Bump actions/checkout from 4.1.4 to 4.1.6 in the github-actions group — 2024-06-01 15:55:45 +0000; 422e05e — Bump the python-requirements group in /requirements with 3 updates (#5492) — 2024-06-01 08:16:45 -0700; 1af8f95 — fix super call in list comprehension — 2024-02-03 12:36:06 -0800; 3435d2f — Fix jinja_loader typehint (#5389) — 2024-02-03 12:18:40 -0800",
+          "affected_artifacts": [
+            "tests/templates/context_template.html"
+          ],
+          "relationship": null,
+          "potential_impact": null,
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "tests/templates/context_template.html",
+              "description": "Git commit e3535f9 modified tests/templates/context_template.html. Message: \"Bump actions/checkout from 4.1.4 to 4.1.6 in the github-actions group\". Author: dependabot[bot]. Date: 2024-06-01 15:55:45 +0000.",
+              "evidence_type": "direct_modification",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "tests/templates/context_template.html",
+              "description": "Git commit 422e05e modified tests/templates/context_template.html. Message: \"Bump the python-requirements group in /requirements with 3 updates (#5492)\". Author: David Lord. Date: 2024-06-01 08:16:45 -0700.",
+              "evidence_type": "direct_modification",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "tests/templates/context_template.html",
+              "description": "Git commit 1af8f95 modified tests/templates/context_template.html. Message: \"fix super call in list comprehension\". Author: Tony Huang. Date: 2024-02-03 12:36:06 -0800.",
+              "evidence_type": "direct_modification",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "tests/templates/context_template.html",
+              "description": "Git commit 3435d2f modified tests/templates/context_template.html. Message: \"Fix jinja_loader typehint (#5389)\". Author: David Lord. Date: 2024-02-03 12:18:40 -0800.",
+              "evidence_type": "direct_modification",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "tests/templates/context_template.html",
+              "description": "e3535f9: Bump actions/checkout from 4.1.4 to 4.1.6 in the github-actions group",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "tests/templates/context_template.html",
+              "description": "422e05e: Bump the python-requirements group in /requirements with 3 updates (#5492)",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "tests/templates/context_template.html",
+              "description": "1af8f95: fix super call in list comprehension",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "tests/templates/context_template.html",
+              "description": "3435d2f: Fix jinja_loader typehint (#5389)",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            }
+          ],
+          "evidence_strength": "confirmed",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "history:tests/templates/context_template.html"
+        },
+        {
+          "id": "history:tests/test_request.py",
+          "category": "historical",
+          "title": "History: tests/test_request.py",
+          "description": "2 relevant commit(s): 4f7156f — configure and check trusted_hosts — 2024-11-12 21:01:55 -0800; c7a5388 — add config and docs for limits — 2024-11-01 13:17:53 -0700",
+          "affected_artifacts": [
+            "tests/test_request.py"
+          ],
+          "relationship": null,
+          "potential_impact": null,
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "tests/test_request.py",
+              "description": "Git commit 4f7156f modified tests/test_request.py. Message: \"configure and check trusted_hosts\". Author: David Lord. Date: 2024-11-12 21:01:55 -0800.",
+              "evidence_type": "direct_modification",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "tests/test_request.py",
+              "description": "Git commit c7a5388 modified tests/test_request.py. Message: \"add config and docs for limits\". Author: David Lord. Date: 2024-11-01 13:17:53 -0700.",
+              "evidence_type": "direct_modification",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "tests/test_request.py",
+              "description": "4f7156f: configure and check trusted_hosts",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "tests/test_request.py",
+              "description": "c7a5388: add config and docs for limits",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            }
+          ],
+          "evidence_strength": "confirmed",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "history:tests/test_request.py"
+        }
+      ]
+    },
+    "risk": {
+      "finding_count": 0,
+      "highest_severity": null,
+      "findings": []
+    }
+  },
+  "findings": [
+    {
+      "id": "context:src/flask/ctx.py",
+      "category": "context",
+      "title": "src/flask/ctx.py",
+      "description": "path keywords ['ctx'] match change keywords",
+      "affected_artifacts": [
+        "src/flask/ctx.py"
+      ],
+      "relationship": null,
+      "potential_impact": null,
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "path keywords ['ctx'] match change keywords",
+          "evidence_type": "DERIVED_RELATIONSHIP",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/ctx.py"
+    },
+    {
+      "id": "context:tests/templates/context_template.html",
+      "category": "context",
+      "title": "tests/templates/context_template.html",
+      "description": "path keywords ['context'] match change keywords",
+      "affected_artifacts": [
+        "tests/templates/context_template.html"
+      ],
+      "relationship": null,
+      "potential_impact": null,
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "tests/templates/context_template.html",
+          "description": "path keywords ['context'] match change keywords",
+          "evidence_type": "DERIVED_RELATIONSHIP",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:tests/templates/context_template.html"
+    },
+    {
+      "id": "context:tests/test_request.py",
+      "category": "context",
+      "title": "tests/test_request.py",
+      "description": "path keywords ['request'] match change keywords",
+      "affected_artifacts": [
+        "tests/test_request.py"
+      ],
+      "relationship": null,
+      "potential_impact": null,
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "tests/test_request.py",
+          "description": "path keywords ['request'] match change keywords",
+          "evidence_type": "DERIVED_RELATIONSHIP",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:tests/test_request.py"
+    },
+    {
+      "id": "impact:src/flask/ctx.py:impacts",
+      "category": "impact",
+      "title": "src/flask/ctx.py",
+      "description": "Source file 'src/flask/ctx.py' may be affected by the change ('Refactor request context handling.').",
+      "affected_artifacts": [
+        "src/flask/ctx.py"
+      ],
+      "relationship": "impacts",
+      "potential_impact": "Source file 'src/flask/ctx.py' may be affected by the change ('Refactor request context handling.').",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "Phase 2 identified 'src/flask/ctx.py' as relevant (reason: keyword_match; confidence: likely). Evidence: path keywords ['ctx'] match change keywords",
+          "evidence_type": "DERIVED_RELATIONSHIP",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/ctx.py"
+    },
+    {
+      "id": "impact:src/flask/ctx.py:historically_changed_with",
+      "category": "impact",
+      "title": "src/flask/ctx.py",
+      "description": "'src/flask/ctx.py' has 12 recorded commit(s) in the repository history relevant to this area of the codebase.",
+      "affected_artifacts": [
+        "src/flask/ctx.py"
+      ],
+      "relationship": "historically_changed_with",
+      "potential_impact": "'src/flask/ctx.py' has 12 recorded commit(s) in the repository history relevant to this area of the codebase.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "Git commit 06ea505 modified 'src/flask/ctx.py': 'separate copy per call' (DIRECT_EVIDENCE: git log).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "Git commit a29f88c modified 'src/flask/ctx.py': 'document that headers must be set before streaming' (DIRECT_EVIDENCE: git log).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "Git commit fbb6f0b modified 'src/flask/ctx.py': 'all teardown callbacks are called despite errors' (DIRECT_EVIDENCE: git log).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/ctx.py"
+    },
+    {
+      "id": "impact:tests/templates/context_template.html:historically_changed_with",
+      "category": "impact",
+      "title": "tests/templates/context_template.html",
+      "description": "'tests/templates/context_template.html' has 4 recorded commit(s) in the repository history relevant to this area of the codebase.",
+      "affected_artifacts": [
+        "tests/templates/context_template.html"
+      ],
+      "relationship": "historically_changed_with",
+      "potential_impact": "'tests/templates/context_template.html' has 4 recorded commit(s) in the repository history relevant to this area of the codebase.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "tests/templates/context_template.html",
+          "description": "Git commit e3535f9 modified 'tests/templates/context_template.html': 'Bump actions/checkout from 4.1.4 to 4.1.6 in the github-actions group' (DIRECT_EVIDENCE: git log).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        },
+        {
+          "artifact": "tests/templates/context_template.html",
+          "description": "Git commit 422e05e modified 'tests/templates/context_template.html': 'Bump the python-requirements group in /requirements with 3 updates (#5492)' (refs: #5492) (DIRECT_EVIDENCE: git log).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        },
+        {
+          "artifact": "tests/templates/context_template.html",
+          "description": "Git commit 1af8f95 modified 'tests/templates/context_template.html': 'fix super call in list comprehension' (DIRECT_EVIDENCE: git log).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:tests/templates/context_template.html"
+    },
+    {
+      "id": "impact:tests/test_request.py:historically_changed_with",
+      "category": "impact",
+      "title": "tests/test_request.py",
+      "description": "'tests/test_request.py' has 2 recorded commit(s) in the repository history relevant to this area of the codebase.",
+      "affected_artifacts": [
+        "tests/test_request.py"
+      ],
+      "relationship": "historically_changed_with",
+      "potential_impact": "'tests/test_request.py' has 2 recorded commit(s) in the repository history relevant to this area of the codebase.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "tests/test_request.py",
+          "description": "Git commit 4f7156f modified 'tests/test_request.py': 'configure and check trusted_hosts' (DIRECT_EVIDENCE: git log).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        },
+        {
+          "artifact": "tests/test_request.py",
+          "description": "Git commit c7a5388 modified 'tests/test_request.py': 'add config and docs for limits' (DIRECT_EVIDENCE: git log).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:tests/test_request.py"
+    },
+    {
+      "id": "impact:tests/templates/context_template.html:tested_by",
+      "category": "impact",
+      "title": "tests/templates/context_template.html",
+      "description": "Test 'tests/templates/context_template.html' may need review after the change.",
+      "affected_artifacts": [
+        "tests/templates/context_template.html"
+      ],
+      "relationship": "tested_by",
+      "potential_impact": "Test 'tests/templates/context_template.html' may need review after the change.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "tests/templates/context_template.html",
+          "description": "Test file 'tests/templates/context_template.html' was identified as relevant by Phase 2 (reason: keyword_match). No source-stem match found; relationship is inferred.",
+          "evidence_type": "INFERENCE",
+          "confidence": "possible"
+        }
+      ],
+      "evidence_strength": "possible",
+      "is_inference": true,
+      "recommendation": null,
+      "graph_node_id": "artifact:tests/templates/context_template.html"
+    },
+    {
+      "id": "impact:tests/test_request.py:tested_by",
+      "category": "impact",
+      "title": "tests/test_request.py",
+      "description": "Test 'tests/test_request.py' may need review after the change.",
+      "affected_artifacts": [
+        "tests/test_request.py"
+      ],
+      "relationship": "tested_by",
+      "potential_impact": "Test 'tests/test_request.py' may need review after the change.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "tests/test_request.py",
+          "description": "Test file 'tests/test_request.py' was identified as relevant by Phase 2 (reason: keyword_match). No source-stem match found; relationship is inferred.",
+          "evidence_type": "INFERENCE",
+          "confidence": "possible"
+        }
+      ],
+      "evidence_strength": "possible",
+      "is_inference": true,
+      "recommendation": null,
+      "graph_node_id": "artifact:tests/test_request.py"
+    },
+    {
+      "id": "history:src/flask/ctx.py",
+      "category": "historical",
+      "title": "History: src/flask/ctx.py",
+      "description": "12 relevant commit(s): 06ea505 — separate copy per call — 2026-05-01 20:31:50 -0700; a29f88c — document that headers must be set before streaming — 2026-03-04 07:36:09 -0800; fbb6f0b — all teardown callbacks are called despite errors — 2026-02-19 19:41:50 -0800; a411a24 — add back opening session on context push — 2026-02-19 08:35:48 -0800; c17f379 — request context tracks session access — 2026-02-18 19:02:54 -0800; 6a64969 — pass context through dispatch methods — 2025-09-19 17:33:30 -0700; c2705ff — merge app and request context — 2025-09-19 16:43:53 -0700; f04c5e6 — update dev dependencies — 2025-06-08 09:52:11 -0700; e3535f9 — Bump actions/checkout from 4.1.4 to 4.1.6 in the github-actions group — 2024-06-01 15:55:45 +0000; 422e05e — Bump the python-requirements group in /requirements with 3 updates (#5492) — 2024-06-01 08:16:45 -0700; 1af8f95 — fix super call in list comprehension — 2024-02-03 12:36:06 -0800; 3435d2f — Fix jinja_loader typehint (#5389) — 2024-02-03 12:18:40 -0800",
+      "affected_artifacts": [
+        "src/flask/ctx.py"
+      ],
+      "relationship": null,
+      "potential_impact": null,
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "Git commit 06ea505 modified src/flask/ctx.py. Message: \"separate copy per call\". Author: David Lord. Date: 2026-05-01 20:31:50 -0700.",
+          "evidence_type": "direct_modification",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "Git commit a29f88c modified src/flask/ctx.py. Message: \"document that headers must be set before streaming\". Author: David Lord. Date: 2026-03-04 07:36:09 -0800.",
+          "evidence_type": "direct_modification",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "Git commit fbb6f0b modified src/flask/ctx.py. Message: \"all teardown callbacks are called despite errors\". Author: David Lord. Date: 2026-02-19 19:41:50 -0800.",
+          "evidence_type": "direct_modification",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "Git commit a411a24 modified src/flask/ctx.py. Message: \"add back opening session on context push\". Author: David Lord. Date: 2026-02-19 08:35:48 -0800.",
+          "evidence_type": "direct_modification",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "Git commit c17f379 modified src/flask/ctx.py. Message: \"request context tracks session access\". Author: David Lord. Date: 2026-02-18 19:02:54 -0800.",
+          "evidence_type": "direct_modification",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "Git commit 6a64969 modified src/flask/ctx.py. Message: \"pass context through dispatch methods\". Author: David Lord. Date: 2025-09-19 17:33:30 -0700.",
+          "evidence_type": "direct_modification",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "Git commit c2705ff modified src/flask/ctx.py. Message: \"merge app and request context\". Author: David Lord. Date: 2025-09-19 16:43:53 -0700.",
+          "evidence_type": "direct_modification",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "Git commit f04c5e6 modified src/flask/ctx.py. Message: \"update dev dependencies\". Author: David Lord. Date: 2025-06-08 09:52:11 -0700.",
+          "evidence_type": "direct_modification",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "Git commit e3535f9 modified src/flask/ctx.py. Message: \"Bump actions/checkout from 4.1.4 to 4.1.6 in the github-actions group\". Author: dependabot[bot]. Date: 2024-06-01 15:55:45 +0000.",
+          "evidence_type": "direct_modification",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "Git commit 422e05e modified src/flask/ctx.py. Message: \"Bump the python-requirements group in /requirements with 3 updates (#5492)\". Author: David Lord. Date: 2024-06-01 08:16:45 -0700.",
+          "evidence_type": "direct_modification",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "Git commit 1af8f95 modified src/flask/ctx.py. Message: \"fix super call in list comprehension\". Author: Tony Huang. Date: 2024-02-03 12:36:06 -0800.",
+          "evidence_type": "direct_modification",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "Git commit 3435d2f modified src/flask/ctx.py. Message: \"Fix jinja_loader typehint (#5389)\". Author: David Lord. Date: 2024-02-03 12:18:40 -0800.",
+          "evidence_type": "direct_modification",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "06ea505: separate copy per call",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "a29f88c: document that headers must be set before streaming",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "fbb6f0b: all teardown callbacks are called despite errors",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "a411a24: add back opening session on context push",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "c17f379: request context tracks session access",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "6a64969: pass context through dispatch methods",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "c2705ff: merge app and request context",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "f04c5e6: update dev dependencies",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "e3535f9: Bump actions/checkout from 4.1.4 to 4.1.6 in the github-actions group",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "422e05e: Bump the python-requirements group in /requirements with 3 updates (#5492)",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "1af8f95: fix super call in list comprehension",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "3435d2f: Fix jinja_loader typehint (#5389)",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        }
+      ],
+      "evidence_strength": "confirmed",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "history:src/flask/ctx.py"
+    },
+    {
+      "id": "history:tests/templates/context_template.html",
+      "category": "historical",
+      "title": "History: tests/templates/context_template.html",
+      "description": "4 relevant commit(s): e3535f9 — Bump actions/checkout from 4.1.4 to 4.1.6 in the github-actions group — 2024-06-01 15:55:45 +0000; 422e05e — Bump the python-requirements group in /requirements with 3 updates (#5492) — 2024-06-01 08:16:45 -0700; 1af8f95 — fix super call in list comprehension — 2024-02-03 12:36:06 -0800; 3435d2f — Fix jinja_loader typehint (#5389) — 2024-02-03 12:18:40 -0800",
+      "affected_artifacts": [
+        "tests/templates/context_template.html"
+      ],
+      "relationship": null,
+      "potential_impact": null,
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "tests/templates/context_template.html",
+          "description": "Git commit e3535f9 modified tests/templates/context_template.html. Message: \"Bump actions/checkout from 4.1.4 to 4.1.6 in the github-actions group\". Author: dependabot[bot]. Date: 2024-06-01 15:55:45 +0000.",
+          "evidence_type": "direct_modification",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "tests/templates/context_template.html",
+          "description": "Git commit 422e05e modified tests/templates/context_template.html. Message: \"Bump the python-requirements group in /requirements with 3 updates (#5492)\". Author: David Lord. Date: 2024-06-01 08:16:45 -0700.",
+          "evidence_type": "direct_modification",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "tests/templates/context_template.html",
+          "description": "Git commit 1af8f95 modified tests/templates/context_template.html. Message: \"fix super call in list comprehension\". Author: Tony Huang. Date: 2024-02-03 12:36:06 -0800.",
+          "evidence_type": "direct_modification",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "tests/templates/context_template.html",
+          "description": "Git commit 3435d2f modified tests/templates/context_template.html. Message: \"Fix jinja_loader typehint (#5389)\". Author: David Lord. Date: 2024-02-03 12:18:40 -0800.",
+          "evidence_type": "direct_modification",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "tests/templates/context_template.html",
+          "description": "e3535f9: Bump actions/checkout from 4.1.4 to 4.1.6 in the github-actions group",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "tests/templates/context_template.html",
+          "description": "422e05e: Bump the python-requirements group in /requirements with 3 updates (#5492)",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "tests/templates/context_template.html",
+          "description": "1af8f95: fix super call in list comprehension",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "tests/templates/context_template.html",
+          "description": "3435d2f: Fix jinja_loader typehint (#5389)",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        }
+      ],
+      "evidence_strength": "confirmed",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "history:tests/templates/context_template.html"
+    },
+    {
+      "id": "history:tests/test_request.py",
+      "category": "historical",
+      "title": "History: tests/test_request.py",
+      "description": "2 relevant commit(s): 4f7156f — configure and check trusted_hosts — 2024-11-12 21:01:55 -0800; c7a5388 — add config and docs for limits — 2024-11-01 13:17:53 -0700",
+      "affected_artifacts": [
+        "tests/test_request.py"
+      ],
+      "relationship": null,
+      "potential_impact": null,
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "tests/test_request.py",
+          "description": "Git commit 4f7156f modified tests/test_request.py. Message: \"configure and check trusted_hosts\". Author: David Lord. Date: 2024-11-12 21:01:55 -0800.",
+          "evidence_type": "direct_modification",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "tests/test_request.py",
+          "description": "Git commit c7a5388 modified tests/test_request.py. Message: \"add config and docs for limits\". Author: David Lord. Date: 2024-11-01 13:17:53 -0700.",
+          "evidence_type": "direct_modification",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "tests/test_request.py",
+          "description": "4f7156f: configure and check trusted_hosts",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "tests/test_request.py",
+          "description": "c7a5388: add config and docs for limits",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        }
+      ],
+      "evidence_strength": "confirmed",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "history:tests/test_request.py"
+    }
+  ],
+  "next_actions": [],
+  "evidence_gaps": [
+    {
+      "description": "Risk analysis produced no risk findings for this change.",
+      "affected_artifact": null
+    }
+  ]
+}

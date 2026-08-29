@@ -33,6 +33,7 @@ The system is intentionally repository-agnostic and does not depend on a specifi
 5. Assess likely impact from structured repository evidence
 6. Identify risk findings tied to evidence
 7. Produce a Change Impact Map as the primary output
+8. Generate a concise Developer Report alongside the map
 
 ---
 
@@ -64,8 +65,9 @@ The implementation is currently in the following state:
 | 3 | Historical Context | IMPLEMENTED |
 | 4 | Impact Analysis | IMPLEMENTED |
 | 5 | Risk Analysis | IMPLEMENTED |
-| 6 | Change Impact Map | PARTIALLY IMPLEMENTED |
-| 7+ | Developer Report, Bob Resolution, Validation, Demo, Submission | NOT IMPLEMENTED / BLOCKED |
+| 6 | Change Impact Map | IMPLEMENTED |
+| 7 | Developer Report | IMPLEMENTED |
+| 8+ | Bob Resolution, Validation, Demo, Submission | NOT IMPLEMENTED / BLOCKED |
 
 What is currently working:
 
@@ -78,14 +80,14 @@ What is currently working:
 - evidence-backed impact findings
 - evidence-backed risk findings
 - structured graph generation and HTML export for a Change Impact Map
+- deterministic Developer Report synthesis with evidence, recommendations, and graph node linking
 
 Current limitations:
 
 - The full interactive Change Impact Map described in the architecture is not yet complete.
-- The project does not yet provide the full developer report workflow.
 - IBM Bob is not yet integrated into a production-style resolution workflow.
 - Repository Knowledge Graph remains an orientation concept rather than a dedicated interactive feature.
-- Phases 7 and beyond are not implemented yet and remain blocked per project task sequencing.
+- Phases 8 and beyond are not implemented yet and remain blocked per project task sequencing.
 
 ---
 

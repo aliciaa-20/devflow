@@ -16,6 +16,7 @@ from devflow.models.history import (
     RepositoryHistory,
 )
 from devflow.models.risk import RiskAnalysis, RiskCategory, RiskFinding, RiskSeverity
+from devflow.models.report import DeveloperReport, ReportAction, ReportEvidence, ReportEvidenceGap, ReportFinding
 
 __all__ = [
     "RepositoryInput",
@@ -38,4 +39,9 @@ __all__ = [
     "RiskCategory",
     "RiskFinding",
     "RiskSeverity",
+    "DeveloperReport",
+    "ReportAction",
+    "ReportEvidence",
+    "ReportEvidenceGap",
+    "ReportFinding",
 ]

@@ -21,6 +21,7 @@ from devflow.risk import build_risk_analysis
 from devflow.map import build_change_impact_map, write_frontend_graph_payload
 from devflow.models.repository import RepositoryInputError
 from devflow.models.change import ChangeRequestError
+from devflow.report import build_developer_report, write_frontend_report_payload
 
 
 logger = logging.getLogger(__name__)
@@ -91,13 +92,22 @@ def run_analysis(repository_url: str, change_description: str) -> AnalysisResult
                 _analysis_in_progress = False
             return AnalysisResult(False, error=f"Graph error: {graph.error}")
 
-        # Write payload to frontend
-        logger.info("Writing graph payload to frontend")
+        report = build_developer_report(context, impact, risk, history)
+
+        # Write payloads to frontend
+        logger.info("Writing graph and report payloads to frontend")
         write_frontend_graph_payload(graph)
+        write_frontend_report_payload(report)
 
         with _analysis_lock:
             _analysis_in_progress = False
-            _analysis_result = AnalysisResult(True, data=graph.to_dict())
+            _analysis_result = AnalysisResult(
+                True,
+                data={
+                    "graph": graph.to_dict(),
+                    "report": report.to_dict(),
+                },
+            )
 
         return _analysis_result
 
@@ -127,9 +137,19 @@ class DevFlowRequestHandler(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header("Content-type", "application/json")
                 self.end_headers()
+                result_data = _analysis_result.data if _analysis_result and _analysis_result.success else None
+                graph_data = None
+                report_data = None
+                if isinstance(result_data, dict):
+                    if "graph" in result_data:
+                        graph_data = result_data.get("graph")
+                        report_data = result_data.get("report")
+                    else:
+                        graph_data = result_data
                 state = {
                     "in_progress": _analysis_in_progress,
-                    "result": _analysis_result.data if _analysis_result and _analysis_result.success else None,
+                    "result": graph_data,
+                    "report": report_data,
                     "error": _analysis_result.error if _analysis_result and not _analysis_result.success else None,
                 }
                 self.wfile.write(json.dumps(state).encode())
@@ -137,6 +157,20 @@ class DevFlowRequestHandler(BaseHTTPRequestHandler):
 
         # Serve frontend files
         frontend_root = Path(__file__).resolve().parents[2] / "frontend"
+
+        if path == "/devflow-report.json":
+            report_file = frontend_root / "public" / "devflow-report.json"
+            if report_file.exists():
+                self.send_response(200)
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+                self.wfile.write(report_file.read_bytes())
+            else:
+                self.send_response(200)
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+                self.wfile.write(b'{"findings":[],"next_actions":[],"evidence_gaps":[]}')
+            return
 
         # Special handling for devflow-graph.json
         if path == "/devflow-graph.json":
@@ -226,7 +260,8 @@ class DevFlowRequestHandler(BaseHTTPRequestHandler):
 
                 response = {
                     "success": result.success,
-                    "data": result.data if result.success else None,
+                    "data": result.data.get("graph") if result.success and isinstance(result.data, dict) else (result.data if result.success else None),
+                    "report": result.data.get("report") if result.success and isinstance(result.data, dict) else None,
                     "error": result.error if not result.success else None,
                 }
                 self.wfile.write(json.dumps(response).encode())

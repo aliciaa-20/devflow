@@ -19,6 +19,7 @@ from devflow.models.graph import (
 from devflow.models.history import RepositoryHistory
 from devflow.models.impact import ImpactAnalysis, ImpactFinding
 from devflow.models.risk import RiskAnalysis
+from devflow.map._ids import artifact_node_id, change_node_id, history_node_id, risk_node_id
 
 
 def build_change_impact_map(
@@ -98,7 +99,7 @@ def build_change_impact_map(
             evidence=evidence,
         )
 
-    central_id = "change"
+    central_id = change_node_id()
     add_node(
         central_id,
         "Developer change",
@@ -119,7 +120,7 @@ def build_change_impact_map(
         artifact = context_artifacts.get(artifact_path)
         if artifact is None:
             continue
-        node_id = f"artifact:{artifact.path}"
+        node_id = artifact_node_id(artifact.path)
         evidence_items = (
             _graph_evidence(
                 {
@@ -142,7 +143,7 @@ def build_change_impact_map(
         )
 
     for finding in impact.findings:
-        target_id = f"artifact:{finding.affected_artifact}"
+        target_id = artifact_node_id(finding.affected_artifact)
         evidence_items = tuple(
             _graph_evidence(ev, finding.evidence_strength.value)
             for ev in finding.evidence
@@ -167,7 +168,7 @@ def build_change_impact_map(
         )
     if risk_analysis:
         for index, risk in enumerate(risk_analysis.risks):
-            risk_id = f"risk:{index}:{risk.category.value}"
+            risk_id = risk_node_id(index, risk.category.value)
             risk_evidence = tuple(
                 _graph_evidence(ev, risk.evidence_strength.value)
                 for ev in risk.evidence
@@ -195,7 +196,7 @@ def build_change_impact_map(
             for artifact_path in risk.affected_artifacts:
                 if artifact_path not in impact_artifacts:
                     continue
-                target_id = f"artifact:{artifact_path}"
+                target_id = artifact_node_id(artifact_path)
                 artifact_evidence = tuple(
                     _graph_evidence(ev, risk.evidence_strength.value)
                     for ev in risk.evidence
@@ -223,7 +224,7 @@ def build_change_impact_map(
                 continue
             if artifact_path not in impact_artifacts:
                 continue
-            history_id = f"history:{artifact_path}"
+            history_id = history_node_id(artifact_path)
             history_evidence = tuple(
                 _graph_evidence(e, "confirmed")
                 for e in artifact_history.evidence
@@ -237,7 +238,7 @@ def build_change_impact_map(
                 latest_commit=artifact_history.commits[0].short_hash,
                 evidence=[item.to_dict() for item in history_evidence],
             )
-            target_id = f"artifact:{artifact_path}"
+            target_id = artifact_node_id(artifact_path)
             add_edge(
                 target_id,
                 history_id,
