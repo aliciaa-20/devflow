@@ -1,12 +1,21 @@
 from devflow.models.repository import RepositoryInput
 from devflow.models.change import ChangeRequest
 from devflow.models.context import ContextArtifact, RepositoryContext, ArtifactKind, RelevanceReason
+from devflow.models.graph import (
+    ChangeImpactMap,
+    GraphEdge,
+    GraphEvidence,
+    GraphNode,
+    GraphNodeType,
+    GraphRelationship,
+)
 from devflow.models.history import (
     HistoricalCommit,
     HistoricalEvidence,
     ArtifactHistory,
     RepositoryHistory,
 )
+from devflow.models.risk import RiskAnalysis, RiskCategory, RiskFinding, RiskSeverity
 
 __all__ = [
     "RepositoryInput",
@@ -15,8 +24,18 @@ __all__ = [
     "RepositoryContext",
     "ArtifactKind",
     "RelevanceReason",
+    "ChangeImpactMap",
+    "GraphEdge",
+    "GraphEvidence",
+    "GraphNode",
+    "GraphNodeType",
+    "GraphRelationship",
     "HistoricalCommit",
     "HistoricalEvidence",
     "ArtifactHistory",
     "RepositoryHistory",
+    "RiskAnalysis",
+    "RiskCategory",
+    "RiskFinding",
+    "RiskSeverity",
 ]

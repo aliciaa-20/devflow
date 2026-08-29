@@ -492,8 +492,8 @@ def _dependency_findings(context: RepositoryContext) -> list[ImpactFinding]:
         else:
             strength = EvidenceStrength.POSSIBLE
             connection = (
-                "present in the repository (always included in context; "
-                "no specific evidence connects it to this change)"
+                "present in the repository (context evidence; "
+                "specific connection may be inferred)"
             )
 
         ev = ImpactEvidence(
@@ -551,8 +551,8 @@ def _configuration_findings(context: RepositoryContext) -> list[ImpactFinding]:
         else:
             strength = EvidenceStrength.POSSIBLE
             connection = (
-                "present in the repository (always included in context; "
-                "no specific evidence connects it to this change)"
+                "present in the repository (context evidence; "
+                "specific connection may be inferred)"
             )
 
         ev = ImpactEvidence(
@@ -652,7 +652,6 @@ def _historical_findings(
         elif artifact.reason in _keyword_matched:
             strength = EvidenceStrength.LIKELY
         else:
-            # Always-included artifacts (dep manifests, configs, docs): possible.
             strength = EvidenceStrength.POSSIBLE
 
         # Build evidence items from the first few commits.

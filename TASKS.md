@@ -384,7 +384,7 @@ PHASE 6
 
 Change Impact Map
 
-Status: BLOCKED
+Status: COMPLETE
 
 Goal
 
@@ -461,6 +461,8 @@ The graph remains readable as the number of artifacts increases.
 The visualization is generated from structured DevFlow data rather than being a decorative visualization.
 
 The graph does not fabricate repository artifacts, relationships, history, risks, or evidence.
+
+The Change Impact Map uses a real Dagre-based hierarchical layout tuned for both small and large graphs, with initial fit behavior that preserves the developer change as the visual focus and keeps the full graph readable rather than collapsed into a tall narrow column.
 
 The Change Impact Map is the primary visual experience of DevFlow.
 

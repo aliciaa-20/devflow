@@ -29,7 +29,12 @@ import pytest
 
 from devflow.context._build import build_context, _find_repo_root
 from devflow.context.inspector import classify_file, is_entry_point, walk_repository
-from devflow.context.relevance import select_relevant_artifacts, _extract_keywords, _path_keywords
+from devflow.context.relevance import (
+    select_relevant_artifacts,
+    _extract_keywords,
+    _path_keywords,
+    _expand_keywords,
+)
 from devflow.context.retriever import RetrievedRepository, RepositoryRetrievalError
 from devflow.input import accept_input
 from devflow.models.change import ChangeRequest
@@ -287,6 +292,9 @@ class TestKeywordExtraction:
         kws = _path_keywords("src/AuthService.ts")
         assert "authservice" in kws
 
+    def test_expands_conservative_code_aliases(self):
+        assert "ctx" in _expand_keywords(frozenset({"context"}))
+
 
 # ---------------------------------------------------------------------------
 # select_relevant_artifacts
@@ -320,27 +328,36 @@ class TestSelectRelevantArtifacts:
         assert art.reason == RelevanceReason.CHANGED_FILE
         assert art.confidence == "confirmed"
 
-    def test_dependency_manifest_always_selected(self, tmp_repo: Path):
+    def test_unconnected_dependency_manifests_are_excluded(self, tmp_repo: Path):
         all_files, _ = walk_repository(tmp_repo)
         change = self._make_change("Unrelated change.")
         artifacts = select_relevant_artifacts(all_files, change)
         paths = [a.path for a in artifacts]
-        assert "pyproject.toml" in paths
-        assert "requirements.txt" in paths
+        assert "pyproject.toml" not in paths
+        assert "requirements.txt" not in paths
 
-    def test_documentation_always_selected(self, tmp_repo: Path):
+    def test_unconnected_documentation_is_excluded(self, tmp_repo: Path):
         all_files, _ = walk_repository(tmp_repo)
         change = self._make_change("Some change.")
         artifacts = select_relevant_artifacts(all_files, change)
         paths = [a.path for a in artifacts]
-        assert "README.md" in paths
+        assert "README.md" not in paths
 
-    def test_configuration_always_selected(self, tmp_repo: Path):
+    def test_unconnected_configuration_is_excluded(self, tmp_repo: Path):
         all_files, _ = walk_repository(tmp_repo)
         change = self._make_change("Some change.")
         artifacts = select_relevant_artifacts(all_files, change)
         paths = [a.path for a in artifacts]
-        assert ".gitignore" in paths
+        assert ".gitignore" not in paths
+
+    def test_keyword_matched_documentation_is_retained(self, tmp_repo: Path):
+        all_files, _ = walk_repository(tmp_repo)
+        change = self._make_change("Update session architecture documentation.")
+        artifacts = select_relevant_artifacts(all_files, change)
+        assert any(
+            a.path == "docs/architecture.md" and a.reason == RelevanceReason.DOCUMENTATION
+            for a in artifacts
+        )
 
     def test_keyword_match_selects_relevant_source(self, tmp_repo: Path):
         all_files, _ = walk_repository(tmp_repo)
@@ -407,13 +424,11 @@ class TestSelectRelevantArtifacts:
         paths = [a.path for a in artifacts]
         assert paths == sorted(paths)
 
-    def test_empty_repo_returns_only_docs(self, tmp_empty_repo: Path):
+    def test_empty_repo_returns_no_unconnected_artifacts(self, tmp_empty_repo: Path):
         all_files, _ = walk_repository(tmp_empty_repo)
         change = self._make_change("Some change.")
         artifacts = select_relevant_artifacts(all_files, change)
-        assert len(artifacts) == 1
-        assert artifacts[0].path == "README.md"
-        assert artifacts[0].kind == ArtifactKind.DOCUMENTATION
+        assert artifacts == []
 
     def test_artifact_has_evidence_string(self, tmp_repo: Path):
         all_files, _ = walk_repository(tmp_repo)
