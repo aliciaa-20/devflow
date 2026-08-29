@@ -7,6 +7,12 @@ This fragmented process increases review time and the risk of missed defects, re
 ### Core Idea
 DevFlow accepts a repository and a developer change, reconstructs the relevant technical and historical context, and presents it as a visual, evidence-backed Change Impact Map. 
 DevFlow is repository-agnostic and should not depend on a specific project, technology stack, or repository structure.
+
+DevFlow first reconstructs a lightweight understanding of the repository so that developers can orient themselves in an unfamiliar codebase.
+
+The developer can optionally open a Repository Knowledge Graph to explore the broader codebase.
+
+The primary output remains the Change Impact Map, which focuses that repository understanding around the developer's proposed change.
 ### Tagline
 From unfamiliar code to confident change.
 ---
@@ -221,6 +227,8 @@ Goal
 
 Retrieve and inspect the supplied repository and reconstruct the repository context relevant to the developer change.
 
+Additionally, DevFlow should maintain enough structured repository context to allow the developer to understand the broader codebase before examining the change impact.
+
 Tasks
 
 * Retrieve the supplied repository
@@ -237,8 +245,22 @@ Tasks
 * Record reasons for relevance
 * Produce structured repository context
 * Preserve repository identity and source references throughout the workflow
+* Build a structured representation of the repository
+* Identify relationships between relevant repository artifacts
+* Support an optional Repository Knowledge Graph visualization
+* Allow the developer to explore repository structure independently of the change
+* Keep the repository graph separate from the change-specific impact graph
 
 Acceptance Criteria
+DevFlow can provide an optional Repository Knowledge Graph that helps a developer understand the structure and relationships of an unfamiliar codebase.
+
+The Repository Knowledge Graph should show relevant repository artifacts and their structural relationships.
+
+The Repository Knowledge Graph is an orientation and exploration feature and is not the primary DevFlow output.
+
+The graph must be generated from structured repository context rather than decorative or hard-coded data.
+
+The Repository Knowledge Graph must not replace or interfere with the Change Impact Map.
 
 Given:
 
@@ -325,7 +347,7 @@ PHASE 5
 
 Risk Analysis
 
-Status: BLOCKED
+Status: COMPLETE
 
 Goal
 
@@ -368,28 +390,79 @@ Goal
 
 Create the primary visual output of DevFlow.
 
+The Change Impact Map must transform the structured outputs of repository context, historical analysis, impact analysis, and risk analysis into a focused visual explanation of a developer’s proposed change.
+
+The graph should allow a developer unfamiliar with the repository to understand, at a glance:
+WHAT is changing?
+        ↓
+WHAT is affected?
+        ↓
+HOW are the artifacts connected?
+        ↓
+WHY are they relevant?
+        ↓
+WHAT evidence supports this?
+        ↓
+WHAT could go wrong?
+
 Tasks
-
 * Define graph data model
-* Render the change as the central node
-* Render relevant repository artifacts
-* Render relationships
-* Visually distinguish important findings
-* Display risk information
-* Allow inspection of evidence
-* Provide summary information
-* Keep the visualization understandable
+* Render the developer change as the central node
+* Render relevant repository artifacts as nodes
+* Render relationships as edges rather than nodes
+* Render risk findings as risk nodes
+* Visually distinguish node types
+* Visually distinguish relationship types
+* Display relationship labels directly on edges
+* Display evidence strength
+* Display historical evidence where available
+* Display risk severity
+* Allow inspection of nodes
+* Allow inspection of edges and their evidence
+* Allow graph zooming
+* Allow graph panning
+* Allow nodes to be repositioned interactively
 * Support focusing on important relationships
-
-Acceptance Criteria
+* Provide a legend explaining node and edge types
+* Provide a concise graph summary
+* Keep the visualization repository-agnostic
+* Keep the graph readable when additional artifacts are discovered
 
 A user can understand the major impact relationships and risks within seconds.
 
-A user can inspect the evidence supporting an important relationship or finding.
+The developer change is visually identifiable as the central node.
 
-The graph must be generated from structured DevFlow data rather than being a purely decorative visualization.
+Relevant repository artifacts are represented as nodes.
 
-⸻
+Relationships are represented as labeled edges, not synthetic relationship nodes.
+
+Node appearance communicates artifact type.
+
+Risk nodes communicate severity.
+
+Edge appearance communicates relationship type.
+
+A user can click a node and inspect its description, relationship information, evidence, confidence, and risk information where available.
+
+A user can click an edge and inspect:
+* Relationship
+* Source
+* Target
+* Description
+* Evidence
+* Confidence
+
+A user can zoom and pan the graph.
+
+A user can reposition nodes without breaking the graph.
+
+The graph remains readable as the number of artifacts increases.
+
+The visualization is generated from structured DevFlow data rather than being a decorative visualization.
+
+The graph does not fabricate repository artifacts, relationships, history, risks, or evidence.
+
+The Change Impact Map is the primary visual experience of DevFlow.
 
 PHASE 7
 
