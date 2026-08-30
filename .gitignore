@@ -14,7 +14,6 @@ build/
 MANIFEST
 .env
 .env.*
-# The template carries no secrets and documents required configuration.
 !.env.example
 *.log
 .DS_Store
@@ -22,6 +21,8 @@ frontend/node_modules/
 dist/
 CLAUDE.md
 WINNING_STRATEGY.md
+
+# Local tool artifacts, not part of the submission.
 .playwright-cli/
 .remember/
 .claude/settings.local.json

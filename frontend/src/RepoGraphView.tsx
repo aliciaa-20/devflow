@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   applyNodeChanges,
   Background,
@@ -15,6 +15,34 @@ import {
 import dagre from '@dagrejs/dagre';
 import { ArtifactNode, Inspector } from './App';
 import Dropdown from './ui/Dropdown';
+
+// A wide, star-shaped graph (one change node, many impacted files) fits only
+// by zooming until every label is unreadable. Cap the zoom so the initial
+// view stays legible; the minimap and panning cover the rest.
+const READABLE_MAX_ZOOM = 0.85;
+
+/**
+ * Open the repository graph on its root at a readable zoom.
+ *
+ * Fitting a 456-node repository scales it to roughly 0.05, which shows only a
+ * grey haze. Landing on the repository root keeps labels legible; Fit, the
+ * minimap and the type filters are there for the wider shape.
+ */
+function openAtRoot(instance: any, nodes: Node[]) {
+  const root =
+    nodes.find((node) => String(node.data?.nodeType) === 'repository') ?? nodes[0];
+  if (!root || !instance?.setCenter) {
+    instance?.fitView?.({ padding: 0.2, duration: 180, maxZoom: READABLE_MAX_ZOOM });
+    return;
+  }
+  const width = Number(root.measured?.width ?? 200);
+  const height = Number(root.measured?.height ?? 90);
+  instance.setCenter(root.position.x + width / 2, root.position.y + height / 2, {
+    zoom: READABLE_MAX_ZOOM,
+    duration: 220,
+  });
+}
+
 
 // Repository Knowledge Graph: a distinct product from the Change Impact Map.
 // It answers "what exists in this codebase?" (orientation), not "what does
@@ -375,7 +403,7 @@ export default function RepoGraphView({ graph, active = true }: { graph: RepoGra
       ? nodes.filter((node) => node.id === selectedNodeId || focusedNodeIds.includes(node.id))
       : nodes;
     const padding = graph.nodes.length > 150 ? 0.15 : 0.22;
-    flow.fitView({ padding, duration: 220, nodes: focusedNodes.length ? focusedNodes : undefined });
+    flow.fitView({ padding, duration: 220, maxZoom: READABLE_MAX_ZOOM, nodes: focusedNodes.length ? focusedNodes : undefined });
   }, [flowReady, focusedNodeIds, graph.nodes.length, nodes, selectedNodeId]);
 
   // Both views stay mounted (see main.tsx) so search/filter/selection/drag
@@ -386,12 +414,22 @@ export default function RepoGraphView({ graph, active = true }: { graph: RepoGra
   // hidden->visible layout reflow (a bare setTimeout(0) can still land
   // before that reflow, which is what produced the NaN viewport in the
   // first place).
+  // First activation opens on the repository root rather than fitting the
+  // whole graph, for the same legibility reason as the Change Impact Map.
+  const hasOpened = useRef(false);
   useEffect(() => {
     if (!active) return;
     let cancelled = false;
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        if (!cancelled) handleFit();
+        if (cancelled) return;
+        const flow = (window as any).__DEVFLOW_REPO_INSTANCE__;
+        if (!hasOpened.current && flow) {
+          hasOpened.current = true;
+          openAtRoot(flow, nodes);
+          return;
+        }
+        handleFit();
       });
     });
     return () => {
@@ -449,10 +487,9 @@ export default function RepoGraphView({ graph, active = true }: { graph: RepoGra
       // fit while hidden -- the become-active effect below fits for real
       // once this pane is actually visible.
       if (!active) return;
-      const padding = graph.nodes.length > 150 ? 0.15 : 0.24;
-      instance.fitView({ padding, duration: 180 });
+      openAtRoot(instance, nodes);
     },
-    [active, graph.nodes.length],
+    [active, nodes],
   );
 
   const onNodeClick = useCallback((_event: any, node: Node) => {

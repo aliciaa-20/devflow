@@ -1409,3 +1409,347 @@ button.active {
   font-size: 11px;
   color: #a8bdd8;
 }
+
+/* =========================================================================
+   DevFlow design system
+   -------------------------------------------------------------------------
+   Appended deliberately so it layers over the earlier ad-hoc rules without
+   requiring a risky rewrite of everything above it.
+
+   Principles:
+     - one accent per state, never a gradient competing with a border
+     - hairline borders, generous padding, a single spacing scale
+     - elevation carries hierarchy; colour carries meaning
+     - motion is short and only ever confirms an interaction
+   ========================================================================= */
+
+:root {
+  /* surface ramp, darkest to lightest */
+  --s-0: #070d17;
+  --s-1: #0b1322;
+  --s-2: #101a2c;
+  --s-3: #16223a;
+  --s-4: #1d2b47;
+
+  /* ink */
+  --ink-1: #eaf1fb;
+  --ink-2: #a9bcd6;
+  --ink-3: #6f829d;
+
+  /* one accent, used for selection and focus everywhere */
+  --accent: #5b9dff;
+  --accent-soft: rgba(91, 157, 255, 0.14);
+  --accent-line: rgba(91, 157, 255, 0.55);
+
+  /* semantic, used only for meaning */
+  --sev-critical: #ff6b6b;
+  --sev-high: #ff9f45;
+  --sev-medium: #f2c744;
+  --sev-low: #57c98a;
+  --ev-direct: #57c98a;
+  --ev-derived: #5b9dff;
+  --ev-inference: #f2c744;
+
+  /* lines */
+  --line-1: rgba(148, 172, 210, 0.13);
+  --line-2: rgba(148, 172, 210, 0.22);
+  --line-3: rgba(148, 172, 210, 0.36);
+
+  /* spacing scale */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+
+  --el-1: 0 1px 2px rgba(3, 8, 18, 0.5);
+  --el-2: 0 2px 6px rgba(3, 8, 18, 0.5), 0 10px 24px rgba(3, 8, 18, 0.36);
+  --el-3: 0 4px 12px rgba(3, 8, 18, 0.55), 0 20px 44px rgba(3, 8, 18, 0.44);
+
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+:root, html, body, #root { background: var(--s-0); color: var(--ink-1); }
+
+/* --- panels ------------------------------------------------------------ */
+
+.sidebar, .inspector {
+  background: var(--s-1);
+  border-color: var(--line-1);
+  padding: var(--sp-5) var(--sp-4);
+}
+
+.panel-title {
+  color: var(--ink-3);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+}
+
+.panel-block { margin-bottom: var(--sp-5); }
+
+/* --- graph nodes: flat surfaces, meaning on the left edge --------------- */
+
+.flow-node {
+  min-width: 172px;
+  border: 1px solid var(--line-2);
+  border-left: 3px solid var(--line-3);
+  border-radius: var(--r-md);
+  background: var(--s-2);
+  box-shadow: var(--el-1);
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
+  transition:
+    border-color 160ms var(--ease),
+    box-shadow 160ms var(--ease),
+    transform 160ms var(--ease),
+    background 160ms var(--ease);
+}
+
+/* Gradients removed on purpose: the left edge carries the type or severity,
+   so the node surface stays flat and the label stays legible. */
+.flow-node.change,
+.flow-node.artifact,
+.flow-node.risk,
+.flow-node.risk.severity-critical,
+.flow-node.risk.severity-high,
+.flow-node.risk.severity-medium,
+.flow-node.risk.severity-low {
+  background: var(--s-2);
+}
+
+.flow-node.change { border-left-color: #a78bfa; }
+.flow-node.artifact { border-left-color: var(--line-3); }
+.flow-node.risk { border-left-color: var(--sev-medium); }
+.flow-node.risk.severity-critical { border-left-color: var(--sev-critical); }
+.flow-node.risk.severity-high { border-left-color: var(--sev-high); }
+.flow-node.risk.severity-medium { border-left-color: var(--sev-medium); }
+.flow-node.risk.severity-low { border-left-color: var(--sev-low); }
+
+.node-structural .flow-node {
+  border-width: 1px;
+  border-left-width: 3px;
+  background: var(--s-3);
+}
+
+.react-flow__node:hover .flow-node:not(.selected) {
+  border-color: var(--line-3);
+  background: var(--s-3);
+  box-shadow: var(--el-2);
+  transform: translateY(-2px);
+}
+
+.flow-node.selected {
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 1px var(--accent-line), var(--el-3);
+  background: var(--s-3);
+}
+
+.node-header, .risk-header {
+  color: var(--ink-3);
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  margin-bottom: var(--sp-1);
+}
+
+.node-body strong { color: var(--ink-1); font-weight: 600; }
+
+@keyframes node-flash-pulse {
+  0%   { box-shadow: 0 0 0 0 var(--accent-line); }
+  45%  { box-shadow: 0 0 0 10px rgba(91, 157, 255, 0.12); }
+  100% { box-shadow: 0 0 0 0 rgba(91, 157, 255, 0); }
+}
+
+/* --- edges -------------------------------------------------------------- */
+
+.react-flow__edge-path { stroke-width: 1.2; }
+.react-flow__edge.selected .react-flow__edge-path,
+.react-flow__edge:hover .react-flow__edge-path { stroke-width: 2; }
+
+/* --- controls ----------------------------------------------------------- */
+
+button {
+  border: 1px solid var(--line-2);
+  background: var(--s-2);
+  color: var(--ink-1);
+  border-radius: var(--r-sm);
+  padding: 7px 11px;
+  transition: border-color 140ms var(--ease), background 140ms var(--ease);
+}
+
+button:hover:not(:disabled) { border-color: var(--line-3); background: var(--s-3); }
+button.active { border-color: var(--accent-line); background: var(--accent-soft); }
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.toolbar, .toolbar-compact { gap: var(--sp-2); }
+
+.toolbar-search-box input,
+.toolbar-relationship-filter select {
+  background: var(--s-1);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  color: var(--ink-1);
+  padding: 7px 10px;
+}
+
+.dropdown-panel {
+  background: var(--s-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-md);
+  box-shadow: var(--el-3);
+  padding: var(--sp-1);
+}
+
+.dropdown-list button { border: 0; background: transparent; border-radius: var(--r-sm); }
+.dropdown-list button:hover:not(:disabled) { background: var(--s-3); }
+.dropdown-list button.active { background: var(--accent-soft); color: var(--ink-1); }
+
+/* --- view tabs ---------------------------------------------------------- */
+
+.view-tabs { border-bottom: 1px solid var(--line-1); gap: var(--sp-1); }
+.view-tabs button { border: 0; background: transparent; color: var(--ink-3); border-radius: 0; }
+.view-tabs button:hover:not(.active) { color: var(--ink-2); background: transparent; }
+.view-tabs button.active { color: var(--ink-1); background: transparent; }
+.view-tabs button.active::after { background: var(--accent); height: 2px; }
+
+/* --- evidence vocabulary, mirroring the CLI ----------------------------- */
+
+.ev-row {
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  gap: var(--sp-2);
+  align-items: start;
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--line-1);
+}
+.ev-row:last-child { border-bottom: 0; }
+
+.ev-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  margin-top: 5px;
+  background: var(--ink-3);
+}
+.ev-dot.direct { background: var(--ev-direct); }
+.ev-dot.derived { background: var(--ev-derived); }
+.ev-dot.inference { background: transparent; border: 1.5px solid var(--ev-inference); }
+
+.ev-kind {
+  font-size: 9.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 700;
+}
+.ev-text { font-size: 11.5px; color: var(--ink-2); line-height: 1.5; }
+
+.ev-legend {
+  display: flex; flex-wrap: wrap; gap: var(--sp-3);
+  font-size: 10px; color: var(--ink-3);
+  padding-bottom: var(--sp-2);
+}
+.ev-legend span { display: inline-flex; align-items: center; gap: 5px; }
+
+/* --- blast radius tree -------------------------------------------------- */
+
+.blast-summary {
+  display: flex; align-items: baseline; gap: var(--sp-2);
+  padding: var(--sp-3) 0;
+}
+.blast-count { font-size: 26px; font-weight: 700; color: var(--ink-1); font-variant-numeric: tabular-nums; }
+.blast-label { font-size: 11px; color: var(--ink-3); }
+
+.blast-tree {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.75;
+  color: var(--ink-2);
+  background: var(--s-0);
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-md);
+  padding: var(--sp-3);
+  max-height: 220px;
+  overflow: auto;
+}
+.blast-tree .bt-root { color: var(--ink-1); font-weight: 600; }
+.blast-tree .bt-glyph { color: var(--ink-3); }
+.blast-tree .bt-direct { color: var(--accent); }
+
+/* --- severity + status chips -------------------------------------------- */
+
+.chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line-2);
+  color: var(--ink-2);
+}
+.chip.critical { color: var(--sev-critical); border-color: rgba(255, 107, 107, 0.4); }
+.chip.high { color: var(--sev-high); border-color: rgba(255, 159, 69, 0.4); }
+.chip.medium { color: var(--sev-medium); border-color: rgba(242, 199, 68, 0.4); }
+.chip.low { color: var(--sev-low); border-color: rgba(87, 201, 138, 0.4); }
+.chip.watsonx { color: var(--accent); border-color: var(--accent-line); }
+
+/* --- inspector sections ------------------------------------------------- */
+
+.insp-section { margin-bottom: var(--sp-5); }
+.insp-section-title {
+  font-size: 9.5px; letter-spacing: 0.11em; text-transform: uppercase;
+  color: var(--ink-3); font-weight: 700;
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--line-1);
+  margin-bottom: var(--sp-3);
+}
+.insp-kv { display: grid; grid-template-columns: 92px 1fr; gap: var(--sp-2); font-size: 11.5px; padding: 3px 0; }
+.insp-kv dt { color: var(--ink-3); }
+.insp-kv dd { color: var(--ink-2); margin: 0; }
+.insp-rationale {
+  font-size: 11.5px; color: var(--ink-2); line-height: 1.55;
+  border-left: 2px solid var(--accent-line);
+  padding-left: var(--sp-3);
+  margin-top: var(--sp-2);
+}
+
+.mono-path { font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); }
+
+/* --- scrollbars --------------------------------------------------------- */
+
+* { scrollbar-width: thin; scrollbar-color: var(--line-3) transparent; }
+*::-webkit-scrollbar { width: 9px; height: 9px; }
+*::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 999px; }
+*::-webkit-scrollbar-thumb:hover { background: var(--line-3); }
+*::-webkit-scrollbar-track { background: transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 1ms !important; animation-duration: 1ms !important; }
+}
+
+/* The toolbar wraps to two rows on narrow viewports, and a top-right toast
+   collided with it. Anchor the status message to the bottom of the canvas
+   instead, clear of both the toolbar and the legend. */
+.graph-status {
+  top: auto;
+  bottom: 16px;
+  right: 50%;
+  transform: translateX(50%);
+  background: var(--s-2);
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  box-shadow: var(--el-2);
+  color: var(--ink-2);
+  font-size: 11.5px;
+  padding: 7px 14px;
+  max-width: none;
+  white-space: nowrap;
+}

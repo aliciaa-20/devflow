@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   applyNodeChanges,
   Background,
@@ -17,6 +17,15 @@ import {
 import dagre from '@dagrejs/dagre';
 import ReportPanel, { type ReportData } from './ReportPanel';
 import Dropdown from './ui/Dropdown';
+import {
+  BlastRadius,
+  EvidenceList,
+  RankingNote,
+  TestCoverage,
+  useRepoIndex,
+  type Ranking,
+  type RepoIndex,
+} from './insights';
 
 export type GraphData = {
   repository_url?: string;
@@ -44,6 +53,36 @@ export type GraphData = {
 
 type AppProps = { graph: GraphData; report?: ReportData; error?: string; active?: boolean };
 type NodeTypeFilter = 'all' | 'change' | 'source' | 'test' | 'documentation' | 'dependency' | 'configuration' | 'historical' | 'risk';
+
+// A wide, star-shaped graph (one change node, many impacted files) fits only
+// by zooming until every label is unreadable. Cap the zoom so the initial
+// view stays legible; the minimap and panning cover the rest.
+const READABLE_MAX_ZOOM = 0.85;
+
+/**
+ * Open the map centred on the change itself, at a readable zoom.
+ *
+ * A change with many impacted files lays out as an extremely wide ribbon --
+ * roughly 8000px across and 700px tall on the Flask sample. Fitting that into
+ * a viewport means scaling to ~0.2, where every label is an illegible smear.
+ * Landing on the change node instead shows the developer what they asked about
+ * and its nearest neighbours at full size; Fit, the minimap and panning are
+ * still there for the overview.
+ */
+function openAtChangeNode(instance: any, nodes: Node[]) {
+  const change =
+    nodes.find((node) => String(node.data?.nodeType) === 'change') ?? nodes[0];
+  if (!change || !instance?.setCenter) {
+    instance?.fitView?.({ padding: 0.24, duration: 180, maxZoom: READABLE_MAX_ZOOM });
+    return;
+  }
+  const width = Number(change.measured?.width ?? minNodeWidth);
+  instance.setCenter(
+    change.position.x + width / 2,
+    change.position.y + nodeHeight / 2,
+    { zoom: READABLE_MAX_ZOOM, duration: 220 },
+  );
+}
 
 const nodeHeight = 92;
 const minNodeWidth = 170;
@@ -357,11 +396,15 @@ export function Inspector({
   selectedEdge,
   allNodes,
   allEdges,
+  repoIndex,
+  rankings,
 }: {
   selectedNode: Node | null;
   selectedEdge: Edge | null;
   allNodes: Node[];
   allEdges: Edge[];
+  repoIndex?: RepoIndex;
+  rankings?: Map<string, Ranking>;
 }) {
   const nodeLookup = useMemo(() => new Map(allNodes.map((node) => [node.id, node])), [allNodes]);
 
@@ -403,20 +446,18 @@ export function Inspector({
           <div className="field-label">Description</div>
           <div>{selectedEdge.data?.description || 'No description available.'}</div>
         </div>
-        <div className="inspector-section">
-          <div className="field-label">Evidence</div>
-          {(evidence.length ? evidence : [{ description: 'No direct evidence available.' }]).map((item: any, index: number) => (
-            <div key={`${item.description}-${index}`} className="evidence-row">
-              <span className="evidence-pill">{(item.evidence_type || item.evidenceType || 'DIRECT').toUpperCase()}</span>
-              <div>{item.description || 'Evidence unavailable.'}</div>
-            </div>
-          ))}
+        <div className="insp-section">
+          <div className="insp-section-title">Evidence</div>
+          <EvidenceList evidence={evidence} />
         </div>
       </aside>
     );
   }
 
-  const metadata = selectedNode?.data?.metadata ?? {};
+  // Graph node metadata is an open, payload-defined bag, so it arrives as
+  // `unknown`. Narrowing it once here keeps every read below type-safe instead
+  // of casting at each use site.
+  const metadata: Record<string, any> = (selectedNode?.data?.metadata as Record<string, any>) ?? {};
   const connectedEdges = allEdges.filter((edge) => edge.source === selectedNode!.id || edge.target === selectedNode!.id);
   const connectedTypes = new Set<string>();
   connectedEdges.forEach((edge) => {
@@ -430,6 +471,19 @@ export function Inspector({
     : selectedNode?.data?.description
       ? [{ description: selectedNode.data.description, evidence_type: 'DIRECT' }]
       : [];
+
+  // The repository-relative path this node stands for, when it has one. Graph
+  // node ids are namespaced (`artifact:src/x.py`), so strip the namespace.
+  const artifactPath =
+    (typeof metadata.path === 'string' && metadata.path) ||
+    (typeof selectedNode?.data?.label === 'string' && selectedNode.data.label.includes('/')
+      ? String(selectedNode.data.label)
+      : selectedNode?.id?.includes(':')
+        ? selectedNode.id.split(':').slice(1).join(':')
+        : '');
+
+  const ranking =
+    (rankings && selectedNode?.id ? rankings.get(selectedNode.id) : undefined) ?? null;
 
   return (
     <aside className="inspector">
@@ -469,14 +523,19 @@ export function Inspector({
           </div>
         </div>
       ) : null}
-      <div className="inspector-section">
-        <div className="field-label">Evidence</div>
-        {(evidence.length ? evidence : [{ description: 'No evidence attached.' }]).map((item: any, index: number) => (
-          <div key={`${item.description}-${index}`} className="evidence-row">
-            <span className="evidence-pill">{(item.evidence_type || item.evidenceType || 'DIRECT').toUpperCase()}</span>
-            <div>{item.description || 'Evidence unavailable.'}</div>
-          </div>
-        ))}
+      {/* Structural context, mirroring what `devflow explain` prints. Rendered
+          only when the Repository Knowledge Graph actually contains this file,
+          so nothing here is inferred from a filename. */}
+      {artifactPath && repoIndex ? (
+        <>
+          <BlastRadius path={artifactPath} index={repoIndex} />
+          <TestCoverage path={artifactPath} index={repoIndex} />
+        </>
+      ) : null}
+      <RankingNote ranking={ranking} />
+      <div className="insp-section">
+        <div className="insp-section-title">Evidence</div>
+        <EvidenceList evidence={evidence} />
       </div>
     </aside>
   );
@@ -523,6 +582,25 @@ function App({ graph, report, error, active = true }: AppProps) {
   const [showMiniMap, setShowMiniMap] = useState(true);
   const [flashNodeId, setFlashNodeId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>('Change impact map loaded');
+
+  // Structural evidence for the inspector: the import graph supplies blast
+  // radius and test coverage, the report's prioritization supplies rank and
+  // rationale. Both are optional; the inspector degrades without them.
+  const repoIndex = useRepoIndex();
+  const rankings = useMemo(() => {
+    const byGraphNode = new Map<string, Ranking>();
+    const entries = report?.prioritization?.rankings ?? [];
+    const findingById = new Map(
+      (report?.findings ?? []).map((finding: any) => [String(finding.id), finding]),
+    );
+    for (const entry of entries as Ranking[]) {
+      const finding = findingById.get(String(entry.finding_id));
+      const nodeId = finding?.graph_node_id;
+      if (nodeId) byGraphNode.set(String(nodeId), entry);
+    }
+    return byGraphNode;
+  }, [report]);
+
   const { nodes: initialNodes, edges: initialEdges } = useMemo(() => getGraphLayout(graph), [graph]);
 
   // `nodes` holds live positions -- it is the ONLY state that changes on
@@ -646,7 +724,7 @@ function App({ graph, report, error, active = true }: AppProps) {
       ? nodes.filter((node) => node.id === selectedNodeId || focusedNodeIds.includes(node.id))
       : nodes;
     const padding = graph.nodes.length > 100 ? 0.18 : 0.22;
-    flow.fitView({ padding, duration: 220, nodes: focusedNodes.length ? focusedNodes : undefined });
+    flow.fitView({ padding, duration: 220, maxZoom: READABLE_MAX_ZOOM, nodes: focusedNodes.length ? focusedNodes : undefined });
   }, [flowReady, focusedNodeIds, graph.nodes.length, nodes, selectedNodeId]);
 
   // Both views stay mounted (see main.tsx) so search/filter/selection/drag
@@ -657,12 +735,25 @@ function App({ graph, report, error, active = true }: AppProps) {
   // hidden->visible layout reflow (a bare setTimeout(0) can still land
   // before that reflow, which is what produced the NaN viewport in the
   // first place).
+  //
+  // The very first time this pane becomes visible we open on the change node
+  // rather than fitting: fitting an 8000px-wide ribbon scales it to ~0.2 and
+  // nothing is readable. Later activations re-fit, because by then the
+  // developer has a selection or focus worth framing.
+  const hasOpened = useRef(false);
   useEffect(() => {
     if (!active) return;
     let cancelled = false;
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        if (!cancelled) handleFit();
+        if (cancelled) return;
+        const flow = (window as any).__DEVFLOW_INSTANCE__;
+        if (!hasOpened.current && flow) {
+          hasOpened.current = true;
+          openAtChangeNode(flow, nodes);
+          return;
+        }
+        handleFit();
       });
     });
     return () => {
@@ -812,10 +903,9 @@ function App({ graph, report, error, active = true }: AppProps) {
       // fit while hidden -- the become-active effect below fits for real
       // once this pane is actually visible.
       if (!active) return;
-      const padding = graph.nodes.length > 100 ? 0.18 : 0.24;
-      instance.fitView({ padding, duration: 180 });
+      openAtChangeNode(instance, nodes);
     },
-    [active, graph.nodes.length],
+    [active, nodes],
   );
 
   if (error && graph.nodes.length === 0) {
@@ -975,7 +1065,14 @@ function App({ graph, report, error, active = true }: AppProps) {
         </ReactFlowProvider>
         <Legend />
       </div>
-      <Inspector selectedNode={selectedNode} selectedEdge={selectedEdge} allNodes={nodes} allEdges={displayEdges} />
+      <Inspector
+        selectedNode={selectedNode}
+        selectedEdge={selectedEdge}
+        allNodes={nodes}
+        allEdges={displayEdges}
+        repoIndex={repoIndex}
+        rankings={rankings}
+      />
     </div>
   );
 }

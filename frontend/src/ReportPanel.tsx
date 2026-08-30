@@ -54,6 +54,28 @@ export type ReportData = {
   findings?: ReportFinding[];
   next_actions?: ReportAction[];
   evidence_gaps?: ReportEvidenceGap[];
+  /**
+   * Attached after report synthesis. `source` records whether the ordering came
+   * from IBM watsonx.ai or from DevFlow's deterministic fallback, and
+   * `discarded_finding_ids` records identifiers the model returned that DevFlow
+   * does not recognise.
+   */
+  prioritization?: {
+    source?: string;
+    model_id?: string | null;
+    from_cache?: boolean;
+    error?: string | null;
+    discarded_finding_ids?: string[];
+    appended_finding_ids?: string[];
+    rankings?: Array<{
+      finding_id: string;
+      rank: number;
+      rationale?: string;
+      severity?: string | null;
+      title?: string | null;
+      source?: string;
+    }>;
+  };
 };
 
 const severityClass = (severity?: string | null) => {
