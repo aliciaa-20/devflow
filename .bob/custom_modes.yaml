@@ -295,7 +295,7 @@ customModes:
       scope.
     whenToUse: ""
     customInstructions: ""
-    groups: []
+    groups: [read]
   - slug: resolver
     name: DevFlow Resolver
     description: Resolve an approved DevFlow finding by investigating the issue,
@@ -671,7 +671,7 @@ customModes:
       5. Remaining risks are reported.
     whenToUse: ""
     customInstructions: ""
-    groups: []
+    groups: [read, edit, command]
   - slug: investigator
     name: DevFlow Investigator
     description: Investigate a developer change across repository code, tests,
@@ -1023,4 +1023,4 @@ customModes:
       - No unsupported conclusions are presented as facts
     whenToUse: ""
     customInstructions: ""
-    groups: []
+    groups: [read]

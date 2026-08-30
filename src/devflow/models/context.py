@@ -12,6 +12,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
 
+from devflow.models.repository_graph import RepositoryKnowledgeGraph
+
 
 class ArtifactKind(str, Enum):
     """Broad classification of a repository artifact."""
@@ -76,6 +78,11 @@ class RepositoryContext:
         entry_points:     Files identified as likely application entry points.
         retrieval_path:   Local path where the repository was inspected
                           (may be None if cleaned up).
+        repository_graph: Repository Knowledge Graph built from the same clone,
+                          carrying the real static import and test-association
+                          edges.  Optional: a graph failure never blocks
+                          context reconstruction, so downstream phases must
+                          treat this as best-effort structural evidence.
         error:            Set if retrieval or inspection failed; other fields
                           may be empty in that case.
     """
@@ -88,6 +95,7 @@ class RepositoryContext:
     all_files: list[str] = field(default_factory=list)
     entry_points: list[str] = field(default_factory=list)
     retrieval_path: Optional[str] = None
+    repository_graph: Optional[RepositoryKnowledgeGraph] = None
     error: Optional[str] = None
 
     def relevant_sources(self) -> list[ContextArtifact]:

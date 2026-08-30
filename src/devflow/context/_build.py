@@ -98,6 +98,39 @@ def build_context(
         ctx.artifacts = artifacts
         # retrieval_path is intentionally left None (cleaned up below).
 
+        # Build the Repository Knowledge Graph from the clone we already have.
+        # Phases 4-5 need its real static import and test-association edges to
+        # reason structurally instead of by filename overlap, and building it
+        # here removes a second, redundant clone of the same repository.
+        #
+        # This is best-effort: the graph is a separate product concern, so a
+        # failure here degrades impact/risk analysis to the non-structural
+        # path rather than failing context reconstruction.
+        #
+        # Imported here rather than at module scope: devflow.knowledge_graph
+        # imports devflow.context.inspector, which initializes this package,
+        # so a top-level import would be circular.
+        try:
+            from devflow.knowledge_graph import build_repository_knowledge_graph
+
+            ctx.repository_graph = build_repository_knowledge_graph(
+                repository.url, local_root=repo_root
+            )
+            if ctx.repository_graph.error:
+                logger.warning(
+                    "Repository knowledge graph unavailable: %s",
+                    ctx.repository_graph.error,
+                )
+            else:
+                logger.info(
+                    "Repository knowledge graph: %d nodes, %d edges",
+                    len(ctx.repository_graph.nodes),
+                    len(ctx.repository_graph.edges),
+                )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Repository knowledge graph build failed: %s", exc)
+            ctx.repository_graph = None
+
     except Exception as exc:  # noqa: BLE001
         logger.exception("Unexpected error during repository inspection")
         ctx.error = f"Repository inspection failed: {exc}"

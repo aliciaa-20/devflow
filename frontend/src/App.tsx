@@ -1,18 +1,22 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  applyNodeChanges,
   Background,
   Controls,
   Handle,
   MarkerType,
+  MiniMap,
   Position,
   ReactFlow,
   type Edge,
   type Node,
+  type NodeChange,
   type NodeProps,
   ReactFlowProvider,
 } from '@xyflow/react';
 import dagre from '@dagrejs/dagre';
 import ReportPanel, { type ReportData } from './ReportPanel';
+import Dropdown from './ui/Dropdown';
 
 export type GraphData = {
   repository_url?: string;
@@ -38,7 +42,7 @@ export type GraphData = {
   }>;
 };
 
-type AppProps = { graph: GraphData; report?: ReportData; error?: string };
+type AppProps = { graph: GraphData; report?: ReportData; error?: string; active?: boolean };
 type NodeTypeFilter = 'all' | 'change' | 'source' | 'test' | 'documentation' | 'dependency' | 'configuration' | 'historical' | 'risk';
 
 const nodeHeight = 92;
@@ -72,7 +76,7 @@ const relationshipStyles: Record<string, { color: string; label: string }> = {
 };
 
 const nodeTypeOptions: Array<{ value: NodeTypeFilter; label: string }> = [
-  { value: 'all', label: 'All' },
+  { value: 'all', label: 'All types' },
   { value: 'source', label: 'Source' },
   { value: 'test', label: 'Test' },
   { value: 'documentation', label: 'Documentation' },
@@ -88,9 +92,26 @@ const deriveNodeType = (value?: string): string => {
   return 'other';
 };
 
+// Pure display formatting -- deliberately independent of deriveNodeType's
+// strict typePalette whitelist (which exists to pick a fill color and must
+// fall back to 'other' for anything unrecognized). Inspector is shared by
+// both the Change Impact Map and the Repository Knowledge Graph view, which
+// have different node_type vocabularies (e.g. 'source' vs 'source_file'), so
+// this just title-cases whatever string it's given rather than coercing
+// unknown-but-real types into a meaningless "Other" label.
 const formatNodeType = (value?: string): string => {
-  const normalized = deriveNodeType(value);
-  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+  const raw = (value ?? 'other').replace(/_/g, ' ').trim();
+  return raw.replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+// Border style encodes evidence_strength/confidence when the backend
+// attached it to a node's metadata -- never invented, just surfaced. Solid
+// is the neutral default for nodes that carry no confidence signal at all.
+const confidenceBorderStyle = (metadata?: Record<string, any>): 'solid' | 'dashed' | 'dotted' => {
+  const raw = String(metadata?.confidence ?? metadata?.evidence_strength ?? '').toLowerCase();
+  if (raw === 'likely') return 'dashed';
+  if (raw === 'possible') return 'dotted';
+  return 'solid';
 };
 
 function estimateNodeWidth(label: string, nodeType: string) {
@@ -165,6 +186,9 @@ function getGraphLayout(graph: GraphData) {
       markerEnd: { type: MarkerType.ArrowClosed, color: style.color },
       style: { stroke: style.color, strokeWidth: 2 },
       labelStyle: { fill: '#dfeaff', fontSize: 11, fontWeight: 600 },
+      labelBgStyle: { fill: 'rgba(11, 18, 31, 0.92)' },
+      labelBgPadding: [6, 3] as [number, number],
+      labelBgBorderRadius: 4,
       animated: false,
       data: {
         relationship,
@@ -211,14 +235,35 @@ function ChangeNode(props: NodeProps) {
   );
 }
 
-function ArtifactNode(props: NodeProps) {
+export function ArtifactNode(props: NodeProps) {
   const { data, selected } = props;
+  // isDirectory/collapsed/onToggleCollapse are only ever set by
+  // RepoGraphView (for directory/repository nodes) -- the Change Impact Map
+  // never sets them, so this toggle simply never renders there.
+  const isDirectory = Boolean((data as any).isDirectory);
+  const collapsed = Boolean((data as any).collapsed);
+  const childCount = (data as any).childCount as number | undefined;
   return (
     <div className={`flow-node artifact ${selected ? 'selected' : ''}`}>
       <Handle type="target" position={Position.Left} />
-      <div className="node-header">{String(data.nodeType || 'artifact').toUpperCase()}</div>
+      <div className="node-header">
+        <span>{String(data.nodeType || 'artifact').toUpperCase()}</span>
+        {isDirectory && childCount ? (
+          <button
+            type="button"
+            className="nodrag node-collapse-toggle"
+            title={collapsed ? `Expand (${childCount} hidden)` : 'Collapse'}
+            onClick={(event) => {
+              event.stopPropagation();
+              (data as any).onToggleCollapse?.();
+            }}
+          >
+            {collapsed ? `+${childCount}` : '−'}
+          </button>
+        ) : null}
+      </div>
       <div className="node-body">
-        <strong>{data.label}</strong>
+        <strong className="node-label-mono">{data.label}</strong>
       </div>
       <Handle type="source" position={Position.Right} />
     </div>
@@ -228,11 +273,11 @@ function ArtifactNode(props: NodeProps) {
 function RiskNode(props: NodeProps) {
   const { data, selected } = props;
   return (
-    <div className={`flow-node risk ${selected ? 'selected' : ''}`}>
+    <div className={`flow-node risk severity-${String(data.riskSeverity || 'medium').toLowerCase()} ${selected ? 'selected' : ''}`}>
       <Handle type="target" position={Position.Left} />
       <div className="risk-header">{(data.riskSeverity || 'MEDIUM').toUpperCase()} RISK</div>
       <div className="node-body">
-        <strong>{data.label}</strong>
+        <strong className="node-label-mono">{data.label}</strong>
       </div>
       <Handle type="source" position={Position.Right} />
     </div>
@@ -244,11 +289,15 @@ function AnalysisOverview({
   report,
   error,
   onSelectGraphNode,
+  onFocusRisks,
+  onShowAll,
 }: {
   graph: GraphData;
   report?: ReportData;
   error?: string;
   onSelectGraphNode?: (nodeId: string) => void;
+  onFocusRisks?: () => void;
+  onShowAll?: () => void;
 }) {
   const riskCount = graph.nodes.filter((node) => (node.node_type || '').toLowerCase() === 'risk').length;
   const artifactCount = graph.nodes.filter((node) => {
@@ -264,6 +313,7 @@ function AnalysisOverview({
   return (
     <aside className="sidebar">
       <div className="brand"><span className="brand-mark" /> DEVFLOW</div>
+      <div className="view-kicker view-kicker-change">Change Impact Map</div>
       <div className="panel-block">
         <div className="panel-title">CHANGE</div>
         <div className="summary-change">{error ? 'Unable to load Phase 6 graph data.' : (graph.change_summary || 'Change not available')}</div>
@@ -280,7 +330,7 @@ function AnalysisOverview({
       )}
       <div className="panel-block compact-metrics">
         <div><span>IMPACT</span><strong>{error ? 0 : artifactCount}</strong></div>
-        <div><span>RISKS</span><strong>{error ? 0 : riskCount}</strong></div>
+        <div className={!error && riskCount > 0 ? 'metric-risk' : ''}><span>RISKS</span><strong>{error ? 0 : riskCount}</strong></div>
         <div><span>HIGHEST</span><strong>{error ? 'N/A' : highestRisk.toUpperCase()}</strong></div>
       </div>
       {error ? (
@@ -292,8 +342,8 @@ function AnalysisOverview({
         <div className="panel-block">
           <div className="panel-title">ACTIONS</div>
           <div className="toolbar-stack">
-            <button type="button">Focus Risks</button>
-            <button type="button">Show All</button>
+            <button type="button" onClick={onFocusRisks}>Focus Risks</button>
+            <button type="button" onClick={onShowAll}>Show All</button>
           </div>
         </div>
       )}
@@ -302,7 +352,7 @@ function AnalysisOverview({
   );
 }
 
-function Inspector({
+export function Inspector({
   selectedNode,
   selectedEdge,
   allNodes,
@@ -320,6 +370,7 @@ function Inspector({
       <aside className="inspector empty-state">
         <div className="panel-title">INSPECT</div>
         <p>Select a node or relationship to inspect impact, evidence and risk.</p>
+        <p className="inspector-hint">Double-click a node to focus its immediate connections.</p>
       </aside>
     );
   }
@@ -338,11 +389,11 @@ function Inspector({
         </div>
         <div className="inspector-section">
           <div className="field-label">Source</div>
-          <div>{sourceNode?.data?.label ?? selectedEdge.source}</div>
+          <div className="mono-text">{sourceNode?.data?.label ?? selectedEdge.source}</div>
         </div>
         <div className="inspector-section">
           <div className="field-label">Target</div>
-          <div>{targetNode?.data?.label ?? selectedEdge.target}</div>
+          <div className="mono-text">{targetNode?.data?.label ?? selectedEdge.target}</div>
         </div>
         <div className="inspector-section">
           <div className="field-label">Confidence</div>
@@ -385,7 +436,7 @@ function Inspector({
       <div className="panel-title">{(selectedNode?.data?.nodeType || 'ARTIFACT').toUpperCase()}</div>
       <div className="inspector-section">
         <div className="field-label">Label</div>
-        <div>{selectedNode?.data?.label || selectedNode?.id}</div>
+        <div className="mono-text">{selectedNode?.data?.label || selectedNode?.id}</div>
       </div>
       <div className="inspector-section">
         <div className="field-label">Type</div>
@@ -448,11 +499,11 @@ function Legend() {
           </div>
         </div>
         <div className="legend-group">
-          <div className="legend-title">RELATIONSHIPS</div>
+          <div className="legend-title">EVIDENCE</div>
           <div className="legend-items compact">
-            {['modifies', 'impacts', 'tested_by', 'depends_on', 'documented_by', 'historically_changed_with', 'has_risk'].map((rel) => (
-              <span key={rel} className="legend-pill">{rel}</span>
-            ))}
+            <span className="legend-pill legend-pill-line solid">confirmed</span>
+            <span className="legend-pill legend-pill-line dashed">likely</span>
+            <span className="legend-pill legend-pill-line dotted">possible</span>
           </div>
         </div>
       </div>
@@ -460,7 +511,7 @@ function Legend() {
   );
 }
 
-function App({ graph, report, error }: AppProps) {
+function App({ graph, report, error, active = true }: AppProps) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [riskFocus, setRiskFocus] = useState(false);
@@ -469,16 +520,28 @@ function App({ graph, report, error }: AppProps) {
   const [relationshipFilter, setRelationshipFilter] = useState<string>('all');
   const [focusedNodeIds, setFocusedNodeIds] = useState<string[]>([]);
   const [focusedEdgeIds, setFocusedEdgeIds] = useState<string[]>([]);
+  const [showMiniMap, setShowMiniMap] = useState(true);
+  const [flashNodeId, setFlashNodeId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>('Change impact map loaded');
   const { nodes: initialNodes, edges: initialEdges } = useMemo(() => getGraphLayout(graph), [graph]);
+
+  // `nodes` holds live positions -- it is the ONLY state that changes on
+  // drag (via onNodesChange) or on a fresh graph load (via the effect
+  // below). Visual styling (selection/search/filter highlighting) is a pure
+  // per-render derivation in `displayNodes`/`displayEdges` further down, so
+  // it can never clobber a manually dragged position.
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
-  const [edges, setEdges] = useState<Edge[]>(initialEdges);
   const [flowReady, setFlowReady] = useState(false);
 
-  const selectedNode = nodes.find((node) => node.id === selectedNodeId) ?? null;
-  const selectedEdge = edges.find((edge) => edge.id === selectedEdgeId) ?? null;
+  useEffect(() => {
+    setNodes(initialNodes);
+  }, [initialNodes]);
 
-  const applyVisualState = useCallback(() => {
+  const onNodesChange = useCallback((changes: NodeChange[]) => {
+    setNodes((current) => applyNodeChanges(changes, current));
+  }, []);
+
+  const displayNodes = useMemo(() => {
     const activeNodeSet = new Set<string>();
     if (selectedNodeId) {
       activeNodeSet.add(selectedNodeId);
@@ -491,27 +554,49 @@ function App({ graph, report, error }: AppProps) {
     }
     focusedNodeIds.forEach((id) => activeNodeSet.add(id));
 
-    const relatedEdgeSet = new Set<string>();
-    if (selectedNodeId) {
-      initialEdges.forEach((edge) => {
-        if (edge.source === selectedNodeId || edge.target === selectedNodeId) {
-          relatedEdgeSet.add(edge.id ?? `${edge.source}-${edge.target}-${edge.relationship ?? 'related'}`);
-        }
-      });
-    }
-    focusedEdgeIds.forEach((id) => relatedEdgeSet.add(id));
-
     const searchText = searchTerm.trim().toLowerCase();
     const nodeMatchSet = new Set<string>();
-    const edgeMatchSet = new Set<string>();
     if (searchText) {
-      initialNodes.forEach((node) => {
+      nodes.forEach((node) => {
         const candidate = [node.data?.label, node.data?.nodeType, node.data?.description, node.data?.metadata?.path, node.data?.metadata?.artifact_kind]
           .filter(Boolean)
           .join(' ')
           .toLowerCase();
         if (candidate.includes(searchText)) nodeMatchSet.add(node.id);
       });
+    }
+
+    return nodes.map((node) => {
+      const nodeType = String(node.data?.nodeType ?? 'other');
+      const isVisible = typeFilter === 'all' || nodeType === typeFilter;
+      const isSelected = node.id === selectedNodeId;
+      const isRelated = activeNodeSet.has(node.id);
+      const isMatched = !searchText || nodeMatchSet.has(node.id);
+      const isRisk = nodeType === 'risk';
+      const shouldDim = selectedNodeId ? !isSelected && !isRelated && !isMatched && !isRisk : !isMatched && !isRisk && !!searchText;
+      const shouldFilterDim = typeFilter !== 'all' && !isVisible && !isSelected;
+      const opacity = shouldFilterDim || shouldDim ? 0.16 : isSelected || isRelated || isRisk || !searchText ? 1 : 0.72;
+      const borderColor = isSelected ? '#f8fafc' : isRelated ? '#60a5fa' : isRisk ? undefined : undefined;
+      const boxShadow = isSelected ? '0 0 0 2px rgba(96,165,250,.55), 0 16px 32px rgba(2,6,23,.55)' : isRelated ? '0 0 0 1px rgba(96,165,250,.4)' : undefined;
+      const isFlashing = node.id === flashNodeId;
+      return {
+        ...node,
+        className: [node.className, isFlashing ? 'node-flash' : ''].filter(Boolean).join(' '),
+        style: {
+          ...node.style,
+          opacity,
+          borderColor,
+          boxShadow,
+          borderStyle: confidenceBorderStyle(node.data?.metadata as Record<string, any> | undefined),
+        },
+      };
+    });
+  }, [nodes, initialEdges, flashNodeId, focusedNodeIds, searchTerm, selectedNodeId, typeFilter]);
+
+  const displayEdges = useMemo(() => {
+    const searchText = searchTerm.trim().toLowerCase();
+    const edgeMatchSet = new Set<string>();
+    if (searchText) {
       initialEdges.forEach((edge) => {
         const candidate = [edge.data?.relationship, edge.data?.description, edge.data?.confidence, edge.source, edge.target]
           .filter(Boolean)
@@ -520,68 +605,70 @@ function App({ graph, report, error }: AppProps) {
         if (candidate.includes(searchText)) edgeMatchSet.add(edge.id ?? `${edge.source}-${edge.target}-${edge.data?.relationship ?? 'related'}`);
       });
     }
+    const relatedEdgeSet = new Set<string>();
+    if (selectedNodeId) {
+      initialEdges.forEach((edge) => {
+        if (edge.source === selectedNodeId || edge.target === selectedNodeId) {
+          relatedEdgeSet.add(edge.id ?? `${edge.source}-${edge.target}-${edge.data?.relationship ?? 'related'}`);
+        }
+      });
+    }
+    focusedEdgeIds.forEach((id) => relatedEdgeSet.add(id));
 
-    setNodes(
-      initialNodes.map((node) => {
-        const nodeType = String(node.data?.nodeType ?? 'other');
-        const isVisible = typeFilter === 'all' || nodeType === typeFilter;
-        const isSelected = node.id === selectedNodeId;
-        const isRelated = activeNodeSet.has(node.id);
-        const isMatched = !searchText || nodeMatchSet.has(node.id);
-        const isRisk = nodeType === 'risk';
-        const shouldDim = selectedNodeId ? !isSelected && !isRelated && !isMatched && !isRisk : !isMatched && !isRisk && !!searchText;
-        const shouldFilterDim = typeFilter !== 'all' && !isVisible && !isSelected;
-        const opacity = shouldFilterDim || shouldDim ? 0.16 : isSelected || isRelated || isRisk || !searchText ? 1 : 0.72;
-        const borderColor = isSelected ? '#f8fafc' : isRelated ? '#60a5fa' : isRisk ? '#f87171' : undefined;
-        const boxShadow = isSelected ? '0 0 0 2px rgba(96,165,250,.5)' : isRelated ? '0 0 0 1px rgba(96,165,250,.4)' : 'none';
-        return {
-          ...node,
-          style: {
-            ...node.style,
-            opacity,
-            borderColor,
-            boxShadow,
-          },
-        };
-      }),
-    );
+    return initialEdges.map((edge) => {
+      const edgeId = edge.id ?? `${edge.source}-${edge.target}-${edge.data?.relationship ?? 'related'}`;
+      const relationship = String(edge.data?.relationship ?? 'related_to');
+      const isSelected = edgeId === selectedEdgeId;
+      const isRelated = relatedEdgeSet.has(edgeId);
+      const isVisible = relationshipFilter === 'all' || relationship === relationshipFilter;
+      const isMatched = !searchText || edgeMatchSet.has(edgeId);
+      const isRiskEdge = relationship === 'has_risk' || relationship === 'risk_for';
+      const dim = !isVisible || (!isSelected && !isRelated && !isMatched && !!searchText && !riskFocus);
+      const opacity = dim ? 0.15 : isSelected || isRelated || isRiskEdge || riskFocus ? 1 : 0.55;
+      const stroke = relationshipStyles[relationship]?.color ?? '#a5b4fc';
+      return {
+        ...edge,
+        style: { stroke, strokeWidth: isSelected ? 3.5 : isRiskEdge ? 2.6 : 1.5, opacity },
+        animated: isSelected || (riskFocus && isRiskEdge),
+        label: isVisible ? relationshipStyles[relationship]?.label ?? relationship : '',
+      };
+    });
+  }, [initialEdges, focusedEdgeIds, relationshipFilter, riskFocus, searchTerm, selectedEdgeId, selectedNodeId]);
 
-    setEdges(
-      initialEdges.map((edge) => {
-        const edgeId = edge.id ?? `${edge.source}-${edge.target}-${edge.data?.relationship ?? 'related'}`;
-        const relationship = String(edge.data?.relationship ?? 'related_to');
-        const isSelected = edgeId === selectedEdgeId;
-        const isRelated = selectedNodeId ? edge.source === selectedNodeId || edge.target === selectedNodeId : false;
-        const isVisible = relationshipFilter === 'all' || relationship === relationshipFilter;
-        const isMatched = !searchText || edgeMatchSet.has(edgeId);
-        const isRiskEdge = relationship === 'has_risk' || relationship === 'risk_for';
-        const dim = !isVisible || (!isSelected && !isRelated && !isMatched && !!searchText && !riskFocus);
-        const opacity = dim ? 0.2 : isSelected || isRelated || isRiskEdge || riskFocus ? 1 : 0.72;
-        const stroke = relationshipStyles[relationship]?.color ?? '#a5b4fc';
-        return {
-          ...edge,
-          style: { stroke, strokeWidth: isSelected ? 3.5 : isRiskEdge ? 3 : 2, opacity },
-          animated: isSelected || (riskFocus && isRiskEdge),
-          label: isVisible ? relationshipStyles[relationship]?.label ?? relationship : '',
-        };
-      }),
-    );
-  }, [focusedEdgeIds, focusedNodeIds, initialEdges, initialNodes, relationshipFilter, riskFocus, searchTerm, selectedEdgeId, selectedNodeId, typeFilter]);
+  const selectedNode = nodes.find((node) => node.id === selectedNodeId) ?? null;
+  const selectedEdge = displayEdges.find((edge) => edge.id === selectedEdgeId) ?? null;
 
   const handleFit = useCallback(() => {
     if (!flowReady) return;
     const flow = (window as any).__DEVFLOW_INSTANCE__;
     if (!flow) return;
     const focusedNodes = selectedNodeId
-      ? initialNodes.filter((node) => node.id === selectedNodeId || focusedNodeIds.includes(node.id))
-      : initialNodes;
+      ? nodes.filter((node) => node.id === selectedNodeId || focusedNodeIds.includes(node.id))
+      : nodes;
     const padding = graph.nodes.length > 100 ? 0.18 : 0.22;
     flow.fitView({ padding, duration: 220, nodes: focusedNodes.length ? focusedNodes : undefined });
-  }, [flowReady, focusedNodeIds, graph.nodes.length, initialNodes, selectedNodeId]);
+  }, [flowReady, focusedNodeIds, graph.nodes.length, nodes, selectedNodeId]);
 
+  // Both views stay mounted (see main.tsx) so search/filter/selection/drag
+  // state survives switching tabs -- but React Flow computes fitView against
+  // whatever size its container had at init, which is zero while its pane is
+  // hidden. Re-fit once whenever this pane actually becomes visible -- wait
+  // two animation frames so the browser has actually completed the
+  // hidden->visible layout reflow (a bare setTimeout(0) can still land
+  // before that reflow, which is what produced the NaN viewport in the
+  // first place).
   useEffect(() => {
-    applyVisualState();
-  }, [applyVisualState]);
+    if (!active) return;
+    let cancelled = false;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (!cancelled) handleFit();
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [active]);
 
   const resetGraph = useCallback(() => {
     setSelectedNodeId(null);
@@ -594,12 +681,11 @@ function App({ graph, report, error }: AppProps) {
     setFocusedEdgeIds([]);
     setStatusMessage('Graph reset');
     setNodes(initialNodes);
-    setEdges(initialEdges);
     setTimeout(() => handleFit(), 0);
-  }, [handleFit, initialEdges, initialNodes]);
+  }, [handleFit, initialNodes]);
 
   const handleFocusRisks = useCallback(() => {
-    const riskIds = new Set(initialNodes.filter((node) => node.data?.nodeType === 'risk').map((node) => node.id));
+    const riskIds = new Set(nodes.filter((node) => node.data?.nodeType === 'risk').map((node) => node.id));
     if (!riskIds.size) {
       setRiskFocus(false);
       setStatusMessage('No risk findings found for this change.');
@@ -621,28 +707,34 @@ function App({ graph, report, error }: AppProps) {
     setSelectedEdgeId(null);
     setStatusMessage('Risk-focused view');
     setTimeout(() => handleFit(), 0);
-  }, [handleFit, initialEdges, initialNodes]);
+  }, [handleFit, initialEdges, nodes]);
+
+  const focusNeighborhood = useCallback(
+    (nodeId: string) => {
+      const neighborIds = new Set<string>();
+      const neighborEdgeIds = new Set<string>();
+      initialEdges.forEach((edge) => {
+        if (edge.source === nodeId || edge.target === nodeId) {
+          neighborIds.add(edge.source);
+          neighborIds.add(edge.target);
+          neighborEdgeIds.add(edge.id ?? `${edge.source}-${edge.target}-${edge.data?.relationship ?? 'related'}`);
+        }
+      });
+      setFocusedNodeIds(Array.from(neighborIds));
+      setFocusedEdgeIds(Array.from(neighborEdgeIds));
+      setStatusMessage('Exploring local neighborhood');
+      setTimeout(() => handleFit(), 0);
+    },
+    [handleFit, initialEdges],
+  );
 
   const handleExploreConnections = useCallback(() => {
     if (!selectedNodeId) {
       setStatusMessage('Select a node to explore its neighborhood.');
       return;
     }
-
-    const neighborIds = new Set<string>();
-    const neighborEdgeIds = new Set<string>();
-    initialEdges.forEach((edge) => {
-      if (edge.source === selectedNodeId || edge.target === selectedNodeId) {
-        neighborIds.add(edge.source);
-        neighborIds.add(edge.target);
-        neighborEdgeIds.add(edge.id ?? `${edge.source}-${edge.target}-${edge.data?.relationship ?? 'related'}`);
-      }
-    });
-    setFocusedNodeIds(Array.from(neighborIds));
-    setFocusedEdgeIds(Array.from(neighborEdgeIds));
-    setStatusMessage('Exploring local neighborhood');
-    setTimeout(() => handleFit(), 0);
-  }, [handleFit, initialEdges, selectedNodeId]);
+    focusNeighborhood(selectedNodeId);
+  }, [focusNeighborhood, selectedNodeId]);
 
   const focusSelectedNode = useCallback(() => {
     if (!selectedNodeId) return;
@@ -657,11 +749,13 @@ function App({ graph, report, error }: AppProps) {
       setFocusedNodeIds([]);
       setFocusedEdgeIds([]);
       setRiskFocus(false);
-      const label = initialNodes.find((node) => node.id === nodeId)?.data?.label ?? nodeId;
+      const label = nodes.find((node) => node.id === nodeId)?.data?.label ?? nodeId;
       setStatusMessage(`Report linked to ${label}`);
+      setFlashNodeId(nodeId);
+      setTimeout(() => setFlashNodeId(null), 900);
       setTimeout(() => handleFit(), 0);
     },
-    [handleFit, initialNodes],
+    [handleFit, nodes],
   );
 
   const onNodeClick = useCallback(
@@ -674,6 +768,16 @@ function App({ graph, report, error }: AppProps) {
       setStatusMessage(`${node.data?.label ?? node.id} selected`);
     },
     [],
+  );
+
+  const onNodeDoubleClick = useCallback(
+    (_event: any, node: Node) => {
+      setSelectedEdgeId(null);
+      setSelectedNodeId(node.id);
+      setRiskFocus(false);
+      focusNeighborhood(node.id);
+    },
+    [focusNeighborhood],
   );
 
   const onEdgeClick = useCallback(
@@ -702,10 +806,16 @@ function App({ graph, report, error }: AppProps) {
     (instance: any) => {
       (window as any).__DEVFLOW_INSTANCE__ = instance;
       setFlowReady(true);
+      // Both views stay mounted (see main.tsx); a pane that starts hidden
+      // has a zero-size container, and fitting against that produces NaN
+      // viewport values (breaks the <Background> pattern). Skip the initial
+      // fit while hidden -- the become-active effect below fits for real
+      // once this pane is actually visible.
+      if (!active) return;
       const padding = graph.nodes.length > 100 ? 0.18 : 0.24;
       instance.fitView({ padding, duration: 180 });
     },
-    [graph.nodes.length],
+    [active, graph.nodes.length],
   );
 
   if (error && graph.nodes.length === 0) {
@@ -746,9 +856,16 @@ function App({ graph, report, error }: AppProps) {
 
   return (
     <div className="app-shell">
-      <AnalysisOverview graph={graph} report={report} error={error} onSelectGraphNode={handleReportNodeSelect} />
+      <AnalysisOverview
+        graph={graph}
+        report={report}
+        error={error}
+        onSelectGraphNode={handleReportNodeSelect}
+        onFocusRisks={handleFocusRisks}
+        onShowAll={resetGraph}
+      />
       <div className="graph-panel">
-        <div className="toolbar toolbar-advanced">
+        <div className="toolbar toolbar-compact">
           <div className="toolbar-search-box">
             <input
               type="text"
@@ -758,41 +875,75 @@ function App({ graph, report, error }: AppProps) {
               aria-label="Search graph"
             />
           </div>
-          <div className="toolbar-actions">
-            <button type="button" onClick={focusSelectedNode} disabled={!selectedNodeId}>Focus Node</button>
-            <button type="button" onClick={handleExploreConnections} disabled={!selectedNodeId}>Explore Connections</button>
-            <button type="button" onClick={handleFit}>Fit</button>
-            <button type="button" onClick={resetGraph}>Reset</button>
-            <button type="button" onClick={handleFocusRisks}>Focus Risks</button>
-            <button type="button" onClick={resetGraph}>Show All</button>
-          </div>
-          <div className="toolbar-filter-group">
-            {nodeTypeOptions.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                className={typeFilter === option.value ? 'active' : ''}
-                onClick={() => setTypeFilter(option.value)}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-          <div className="toolbar-relationship-filter">
-            <select value={relationshipFilter} onChange={(event) => setRelationshipFilter(event.target.value)} aria-label="Relationship filter">
-              <option value="all">All relationships</option>
-              {Object.keys(relationshipStyles).map((key) => (
-                <option key={key} value={key}>{key}</option>
+          <button type="button" onClick={handleFit}>Fit</button>
+          <button type="button" className={riskFocus ? 'active' : ''} onClick={handleFocusRisks}>Focus Risks</button>
+          <Dropdown label="Filter" active={typeFilter !== 'all'}>
+            <div className="dropdown-list">
+              {nodeTypeOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={typeFilter === option.value ? 'active' : ''}
+                  onClick={() => setTypeFilter(option.value)}
+                >
+                  {option.label}
+                </button>
               ))}
-            </select>
-          </div>
+            </div>
+          </Dropdown>
+          <Dropdown label="Relationships" active={relationshipFilter !== 'all'}>
+            <div className="dropdown-list">
+              <button
+                type="button"
+                className={relationshipFilter === 'all' ? 'active' : ''}
+                onClick={() => setRelationshipFilter('all')}
+              >
+                All relationships
+              </button>
+              {Object.keys(relationshipStyles).map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={relationshipFilter === key ? 'active' : ''}
+                  onClick={() => setRelationshipFilter(key)}
+                >
+                  {key.replace(/_/g, ' ')}
+                </button>
+              ))}
+            </div>
+          </Dropdown>
+          <Dropdown label="Focus">
+            {(close) => (
+              <div className="dropdown-list">
+                <button type="button" disabled={!selectedNodeId} onClick={() => { focusSelectedNode(); close(); }}>
+                  Focus Node
+                </button>
+                <button type="button" disabled={!selectedNodeId} onClick={() => { handleExploreConnections(); close(); }}>
+                  Explore Connections
+                </button>
+                <button type="button" onClick={() => { resetGraph(); close(); }}>
+                  Reset / Show All
+                </button>
+              </div>
+            )}
+          </Dropdown>
+          <Dropdown label="Display" align="right">
+            <div className="dropdown-list">
+              <label className="dropdown-checkbox">
+                <input type="checkbox" checked={showMiniMap} onChange={(event) => setShowMiniMap(event.target.checked)} />
+                Minimap
+              </label>
+            </div>
+          </Dropdown>
         </div>
         {statusMessage ? <div className="graph-status">{statusMessage}</div> : null}
         <ReactFlowProvider>
           <ReactFlow
-            nodes={nodes}
-            edges={edges}
+            nodes={displayNodes}
+            edges={displayEdges}
+            onNodesChange={onNodesChange}
             onNodeClick={onNodeClick}
+            onNodeDoubleClick={onNodeDoubleClick}
             onEdgeClick={onEdgeClick}
             onPaneClick={onPaneClick}
             onInit={onInit}
@@ -809,15 +960,26 @@ function App({ graph, report, error }: AppProps) {
           >
             <Background color="#1f2a3c" gap={16} />
             <Controls showInteractive={false} />
+            {showMiniMap ? (
+              <MiniMap
+                position="bottom-left"
+                pannable
+                zoomable
+                nodeColor={(node) => typePalette[String(node.data?.nodeType ?? 'other')] ?? '#64748b'}
+                nodeStrokeWidth={0}
+                maskColor="rgba(6,11,20,0.75)"
+                style={{ background: 'rgba(13,20,34,0.92)' }}
+              />
+            ) : null}
           </ReactFlow>
         </ReactFlowProvider>
         <Legend />
       </div>
-      <Inspector selectedNode={selectedNode} selectedEdge={selectedEdge} allNodes={initialNodes} allEdges={initialEdges} />
+      <Inspector selectedNode={selectedNode} selectedEdge={selectedEdge} allNodes={nodes} allEdges={displayEdges} />
     </div>
   );
 }
 
-export default function AppRoot({ graph, report, error }: AppProps) {
-  return <App graph={graph} report={report} error={error} />;
+export default function AppRoot({ graph, report, error, active }: AppProps) {
+  return <App graph={graph} report={report} error={error} active={active} />;
 }

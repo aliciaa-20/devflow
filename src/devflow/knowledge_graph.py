@@ -19,6 +19,7 @@ from devflow.models.repository_graph import (
     RepositoryKnowledgeGraph,
     RepositoryNodeType,
     RepositoryRelationshipType,
+    external_dependency_node_id,
 )
 
 
@@ -85,7 +86,23 @@ def _python_imports_for_file(path: Path) -> list[str]:
             for alias in node.names:
                 imports.append(alias.name)
         elif isinstance(node, ast.ImportFrom):
-            if node.module:
+            level = node.level or 0
+            if level > 0:
+                # `from . import x` / `from .foo import x` / `from ..foo import x`.
+                # ast strips the leading dots into `level` rather than keeping
+                # them in `module`, so re-encode them as an explicit relative
+                # path ("./foo", "../foo") that _resolve_internal_import
+                # already knows how to resolve against the current file's
+                # directory. level=1 means "this directory" (no ascend);
+                # each additional level ascends one more directory.
+                ascends = level - 1
+                prefix = "../" * ascends if ascends > 0 else "./"
+                if node.module:
+                    imports.append(f"{prefix}{node.module.replace('.', '/')}")
+                else:
+                    for alias in node.names:
+                        imports.append(f"{prefix}{alias.name}")
+            elif node.module:
                 imports.append(node.module)
     return imports
 
@@ -181,6 +198,17 @@ def build_repository_knowledge_graph(
     if root_dir is None or not root_dir.exists():
         graph.error = 'Repository root could not be resolved.'
         return graph
+
+    # Resolve once, up front, so every downstream candidate path (built via
+    # Path.resolve() in _resolve_internal_import) can be compared against
+    # root_dir with relative_to() consistently. Without this, a root_dir that
+    # is itself reached through a symlink (e.g. macOS's /tmp -> /private/tmp
+    # or /var -> /private/var, which is where a cloned or local_root repo
+    # commonly lives) silently breaks every relative-import resolution: the
+    # resolved candidate ends up under /private/... while root_dir stays
+    # unresolved, so relative_to() always raises and every internal Python
+    # import is misclassified as an external dependency.
+    root_dir = root_dir.resolve()
 
     try:
         all_files, _ = walk_repository(root_dir)
@@ -283,28 +311,35 @@ def build_repository_knowledge_graph(
                 import_name = imported.strip().strip('"\'')
                 if import_name.startswith(('http://', 'https://')):
                     continue
-                if import_name.startswith('.') or import_name.startswith('/'):
-                    target_rel = _resolve_internal_import(root_dir, rel_path, import_name, repo_files)
-                    if target_rel is None:
-                        continue
+                # Try internal resolution first regardless of whether import_name
+                # is written relatively ('.foo', JS-style './foo') or as an
+                # absolute in-repo dotted path ('package.module', the normal
+                # shape for a Python `import package.module` / `ast.Import`
+                # alias.name). Only treat it as an external dependency once
+                # in-repo resolution has genuinely failed.
+                target_rel = _resolve_internal_import(root_dir, rel_path, import_name, repo_files)
+                if target_rel is not None:
                     target_kind = classify_file(target_rel)
-                    if target_kind == ArtifactKind.OTHER:
-                        continue
-                    target_id = f'{_node_type_for_kind(target_kind).value}:{target_rel}'
-                    if target_id not in node_map:
-                        continue
-                    evidence = (
-                        RepositoryGraphEvidence(
-                            artifact=rel_path,
-                            description=f"Static import evidence in {rel_path} resolves to {target_rel}.",
-                            evidence_type='static_analysis',
-                        ),
-                    )
-                    add_edge(source_id, target_id, RepositoryRelationshipType.IMPORTS, f'{rel_path} imports {target_rel}.', evidence)
-                    add_edge(target_id, source_id, RepositoryRelationshipType.IMPORTED_BY, f'{target_rel} is imported by {rel_path}.', evidence)
+                    if target_kind != ArtifactKind.OTHER:
+                        target_id = f'{_node_type_for_kind(target_kind).value}:{target_rel}'
+                        if target_id in node_map:
+                            evidence = (
+                                RepositoryGraphEvidence(
+                                    artifact=rel_path,
+                                    description=f"Static import evidence in {rel_path} resolves to {target_rel}.",
+                                    evidence_type='static_analysis',
+                                ),
+                            )
+                            add_edge(source_id, target_id, RepositoryRelationshipType.IMPORTS, f'{rel_path} imports {target_rel}.', evidence)
+                            add_edge(target_id, source_id, RepositoryRelationshipType.IMPORTED_BY, f'{target_rel} is imported by {rel_path}.', evidence)
+                            continue
+                if import_name.startswith('.') or import_name.startswith('/'):
+                    # A relative import that still failed to resolve in-repo
+                    # is not a real external dependency -- skip it rather than
+                    # fabricating a package node for a path fragment.
                     continue
 
-                dependency_id = f'dependency:{import_name}'
+                dependency_id = external_dependency_node_id(import_name)
                 if dependency_id not in node_map:
                     add_node(
                         RepositoryGraphNode(
@@ -325,7 +360,7 @@ def build_repository_knowledge_graph(
                 add_edge(source_id, dependency_id, RepositoryRelationshipType.DEPENDS_ON, f'{rel_path} depends on {import_name}.', evidence)
 
         for dep_name in sorted(_dependency_manifest_names(root_dir)):
-            dep_id = f'dependency:{dep_name}'
+            dep_id = external_dependency_node_id(dep_name)
             if dep_id not in node_map:
                 add_node(
                     RepositoryGraphNode(
@@ -389,8 +424,14 @@ def serialize_repository_knowledge_graph(graph: RepositoryKnowledgeGraph, output
 
 
 def write_repository_graph_payload(graph: RepositoryKnowledgeGraph, *, frontend_dir: str | Path | None = None) -> Path:
+    """Write the Repository Knowledge Graph payload.
+
+    This is intentionally a separate file from devflow-graph.json (the Change
+    Impact Map payload written by devflow.map) -- the two graph concepts are
+    independent products and must not overwrite each other.
+    """
     repo_root = Path(frontend_dir) if frontend_dir is not None else Path(__file__).resolve().parents[2]
     frontend_root = repo_root / 'frontend'
-    target = frontend_root / 'public' / 'devflow-graph.json'
+    target = frontend_root / 'public' / 'devflow-repo-graph.json'
     target.parent.mkdir(parents=True, exist_ok=True)
     return serialize_repository_knowledge_graph(graph, target)

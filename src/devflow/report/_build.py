@@ -10,6 +10,7 @@ from devflow.map._ids import artifact_node_id, change_node_id, history_node_id, 
 from devflow.models.context import RelevanceReason, RepositoryContext
 from devflow.models.history import ArtifactHistory, RepositoryHistory
 from devflow.models.impact import EvidenceType, ImpactAnalysis, ImpactEvidence, ImpactFinding
+from devflow.models.prioritization import Prioritization
 from devflow.models.report import (
     DeveloperReport,
     ReportAction,
@@ -75,11 +76,24 @@ def build_developer_report(
     return report
 
 
-def serialize_developer_report(report: DeveloperReport, output_path: str | Path) -> Path:
-    """Write the canonical JSON payload for the Phase 7 developer report."""
+def serialize_developer_report(
+    report: DeveloperReport,
+    output_path: str | Path,
+    *,
+    prioritization: Optional[Prioritization] = None,
+) -> Path:
+    """Write the canonical JSON payload for the Phase 7 developer report.
+
+    ``prioritization`` is optional and purely additive: report synthesis stays
+    deterministic and offline, and the ranking (which may involve a watsonx
+    call) is attached by the caller after the fact.
+    """
     target = Path(output_path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps(report.to_dict(), ensure_ascii=False, indent=2)
+    document = report.to_dict()
+    if prioritization is not None:
+        document["prioritization"] = prioritization.to_dict()
+    payload = json.dumps(document, ensure_ascii=False, indent=2)
     target.write_text(payload, encoding="utf-8")
     return target
 
@@ -88,12 +102,13 @@ def write_frontend_report_payload(
     report: DeveloperReport,
     *,
     frontend_dir: Optional[str | Path] = None,
+    prioritization: Optional[Prioritization] = None,
 ) -> Path:
     """Persist the report payload in the Vite frontend public directory."""
     repo_root = Path(frontend_dir) if frontend_dir else Path(__file__).resolve().parents[3]
     target = repo_root / "frontend" / "public" / "devflow-report.json"
     target.parent.mkdir(parents=True, exist_ok=True)
-    return serialize_developer_report(report, target)
+    return serialize_developer_report(report, target, prioritization=prioritization)
 
 
 def _changed_files(context: RepositoryContext) -> tuple[str, ...]:

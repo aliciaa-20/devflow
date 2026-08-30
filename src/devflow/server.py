@@ -17,6 +17,7 @@ from devflow.input import accept_input
 from devflow.context import build_context
 from devflow.history import build_historical_context
 from devflow.impact import build_impact_analysis
+from devflow.knowledge_graph import write_repository_graph_payload
 from devflow.risk import build_risk_analysis
 from devflow.map import build_change_impact_map, write_frontend_graph_payload
 from devflow.models.repository import RepositoryInputError
@@ -98,6 +99,15 @@ def run_analysis(repository_url: str, change_description: str) -> AnalysisResult
         logger.info("Writing graph and report payloads to frontend")
         write_frontend_graph_payload(graph)
         write_frontend_report_payload(report)
+
+        # Repository Knowledge Graph: separate, independent product (orientation
+        # view). Phase 2 builds it from the clone it already has, so reuse that
+        # rather than cloning the repository a second time. It may be absent if
+        # the graph build failed, which degrades the Explore Repository view
+        # without affecting the Change Impact Map.
+        if context.repository_graph is not None:
+            logger.info("Writing repository knowledge graph payload")
+            write_repository_graph_payload(context.repository_graph)
 
         with _analysis_lock:
             _analysis_in_progress = False
@@ -182,6 +192,22 @@ class DevFlowRequestHandler(BaseHTTPRequestHandler):
                 self.wfile.write(graph_file.read_bytes())
             else:
                 # No graph yet, return empty
+                self.send_response(200)
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+                self.wfile.write(b'{"nodes":[],"edges":[]}')
+            return
+
+        # Repository Knowledge Graph payload -- separate file from
+        # devflow-graph.json (the Change Impact Map).
+        if path == "/devflow-repo-graph.json":
+            repo_graph_file = frontend_root / "public" / "devflow-repo-graph.json"
+            if repo_graph_file.exists():
+                self.send_response(200)
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+                self.wfile.write(repo_graph_file.read_bytes())
+            else:
                 self.send_response(200)
                 self.send_header("Content-type", "application/json")
                 self.end_headers()

@@ -29,6 +29,11 @@ re-scan the entire repository.  It uses the structured context to:
      the Phase 2 context.
   7. Record HISTORICALLY_CHANGED_WITH relationships for artifacts that
      Phase 3 found co-changed with relevant source files.
+  8. Record structural IMPORTS / IMPACTS / TESTED_BY relationships from the
+     Repository Knowledge Graph's real static import edges, when Phase 2 was
+     able to build it.  This is the strongest non-declared evidence DevFlow
+     has: "B imports A" is a fact parsed from A's and B's source, not a
+     filename coincidence.
 
 Evidence-strength policy
 ------------------------
@@ -64,6 +69,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 
+from devflow.graph_index import build_graph_index
 from devflow.models.context import (
     ArtifactKind,
     ContextArtifact,
@@ -174,6 +180,170 @@ def _analyse(
     if history and not history.error:
         findings.extend(_historical_findings(context, history))
 
+    # 8. Structural findings from the Repository Knowledge Graph's real
+    #    static import edges.  Runs last so _deduplicate() keeps the
+    #    strongest evidence when it overlaps an earlier keyword-derived
+    #    finding for the same (artifact, relationship) pair.
+    findings.extend(_graph_structural_findings(context))
+
+    return findings
+
+
+# ---------------------------------------------------------------------------
+# 8. Structural findings (IMPORTS / IMPACTS / TESTED_BY — DIRECT_EVIDENCE)
+# ---------------------------------------------------------------------------
+
+
+# Bounds the transitive dependent walk.  Depth 2 covers "imports the changed
+# file" and "imports something that imports it", which is the range a reviewer
+# can act on; deeper hops in a large repository produce noise, not insight.
+_MAX_DEPENDENT_DEPTH = 2
+
+# Caps how many dependents a single seed file contributes, so one heavily
+# imported module (e.g. a package __init__) cannot flood the impact set.
+_MAX_DEPENDENTS_PER_SEED = 25
+
+
+def _graph_structural_findings(context: RepositoryContext) -> list[ImpactFinding]:
+    """Derive impact from the repository's real static import graph.
+
+    Seeds are the source artifacts Phase 2 already found relevant.  For each
+    seed we record:
+
+      * IMPORTS    — files the seed imports (its dependencies)
+      * IMPACTS    — files that import the seed, directly or transitively
+                     (its dependents: the actual blast radius)
+      * TESTED_BY  — tests structurally associated with the seed
+
+    Every finding carries DIRECT_EVIDENCE because a static import edge is
+    parsed from real source, not inferred from a filename.  Transitive
+    dependents are marked LIKELY rather than CONFIRMED: the import chain is
+    real, but whether the change propagates that far is not established.
+    """
+    index = build_graph_index(context.repository_graph)
+    if not index.available:
+        logger.info(
+            "Structural impact skipped: no usable repository graph (%s)",
+            index.error or "graph contained no files",
+        )
+        return []
+
+    findings: list[ImpactFinding] = []
+    seeds = [
+        artifact.path
+        for artifact in context.artifacts
+        if artifact.kind in (ArtifactKind.SOURCE, ArtifactKind.TEST)
+        and index.has_file(artifact.path)
+    ]
+    seen_seeds = set(seeds)
+
+    for seed in seeds:
+        # Direct dependencies of the seed.
+        for target in index.imports_of(seed):
+            if target in seen_seeds:
+                continue
+            findings.append(
+                ImpactFinding(
+                    affected_artifact=target,
+                    relationship=RelationshipType.IMPORTS,
+                    potential_impact=(
+                        f"'{seed}' imports '{target}'. A change to '{seed}' may "
+                        f"depend on behavior defined in '{target}'."
+                    ),
+                    evidence=(
+                        ImpactEvidence(
+                            artifact=target,
+                            description=(
+                                f"Static import edge: '{seed}' imports '{target}' "
+                                "(DIRECT_EVIDENCE: import statement parsed from "
+                                "repository source)."
+                            ),
+                            evidence_type=EvidenceType.DIRECT_EVIDENCE,
+                        ),
+                    ),
+                    evidence_strength=EvidenceStrength.LIKELY,
+                    finding_type="source",
+                )
+            )
+
+        # Dependents: the real blast radius of changing the seed.
+        direct_dependents = set(index.imported_by(seed))
+        transitive = index.transitive_dependents(seed, max_depth=_MAX_DEPENDENT_DEPTH)
+        for dependent in transitive[:_MAX_DEPENDENTS_PER_SEED]:
+            if dependent in seen_seeds:
+                continue
+            is_direct = dependent in direct_dependents
+            if is_direct:
+                description = (
+                    f"Static import edge: '{dependent}' imports '{seed}' "
+                    "(DIRECT_EVIDENCE: import statement parsed from repository "
+                    "source)."
+                )
+                strength = EvidenceStrength.CONFIRMED
+                impact = (
+                    f"'{dependent}' directly imports '{seed}' and is exposed to "
+                    "any behavioral change in it."
+                )
+            else:
+                description = (
+                    f"Transitive import chain: '{dependent}' reaches '{seed}' "
+                    f"through at most {_MAX_DEPENDENT_DEPTH} static import hops "
+                    "(DIRECT_EVIDENCE: every hop is a parsed import statement)."
+                )
+                strength = EvidenceStrength.LIKELY
+                impact = (
+                    f"'{dependent}' transitively depends on '{seed}'. Whether the "
+                    "change propagates this far is not established."
+                )
+            findings.append(
+                ImpactFinding(
+                    affected_artifact=dependent,
+                    relationship=RelationshipType.IMPACTS,
+                    potential_impact=impact,
+                    evidence=(
+                        ImpactEvidence(
+                            artifact=dependent,
+                            description=description,
+                            evidence_type=EvidenceType.DIRECT_EVIDENCE,
+                        ),
+                    ),
+                    evidence_strength=strength,
+                    finding_type="source",
+                )
+            )
+
+        # Tests structurally associated with the seed.
+        for test_path in index.tests_for(seed):
+            findings.append(
+                ImpactFinding(
+                    affected_artifact=test_path,
+                    relationship=RelationshipType.TESTED_BY,
+                    potential_impact=(
+                        f"Test '{test_path}' is structurally associated with "
+                        f"'{seed}' and should be re-run after the change."
+                    ),
+                    evidence=(
+                        ImpactEvidence(
+                            artifact=test_path,
+                            description=(
+                                f"Repository graph test association: '{seed}' is "
+                                f"tested by '{test_path}' (DIRECT_EVIDENCE: "
+                                "derived from repository structure)."
+                            ),
+                            evidence_type=EvidenceType.DIRECT_EVIDENCE,
+                        ),
+                    ),
+                    evidence_strength=EvidenceStrength.LIKELY,
+                    finding_type="test",
+                )
+            )
+
+    logger.info(
+        "Structural impact: %d findings from %d seeds over %d import edges",
+        len(findings),
+        len(seeds),
+        index.import_edge_count,
+    )
     return findings
 
 

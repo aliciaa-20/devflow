@@ -49,7 +49,7 @@ OPTIONAL REPOSITORY ORIENTATION FEATURE
 
 A Repository Knowledge Graph is a separate concept: it helps a developer orient themselves in an unfamiliar codebase by exploring the repository structure and important artifacts. It is optional and is not the primary DevFlow output.
 
-The current implementation includes structured repository context for this purpose, but it does not yet provide a dedicated interactive Repository Knowledge Graph UI.
+The current implementation builds a real Repository Knowledge Graph (file/directory structure, static import relationships, tests, documentation, configuration, and dependencies) for every analyzed repository and renders it in an "Explore Repository" tab alongside the Change Impact Map. It is a separate view with its own payload (`devflow-repo-graph.json`) and is not merged into the Change Impact Map.
 
 ---
 
@@ -67,7 +67,10 @@ The implementation is currently in the following state:
 | 5 | Risk Analysis | IMPLEMENTED |
 | 6 | Change Impact Map | IMPLEMENTED |
 | 7 | Developer Report | IMPLEMENTED |
-| 8+ | Bob Resolution, Validation, Demo, Submission | NOT IMPLEMENTED / BLOCKED |
+| 8 | Bob Resolution (human-gated vertical slice) | IMPLEMENTED |
+| 9 | Deterministic Validation | IMPLEMENTED |
+| 11 | watsonx.ai Finding Prioritization | IMPLEMENTED |
+| 10, 12-14 | Extended agentic workflow, Measurement, Demo, Submission | IN PROGRESS |
 
 What is currently working:
 
@@ -81,13 +84,19 @@ What is currently working:
 - evidence-backed risk findings
 - structured graph generation and HTML export for a Change Impact Map
 - deterministic Developer Report synthesis with evidence, recommendations, and graph node linking
+- Repository Knowledge Graph generation (structure, static imports, tests, docs, configuration, dependencies) with a dedicated "Explore Repository" interactive view
+- **structural impact analysis driven by real static import edges**, so impact and risk are justified by parsed `import` statements rather than filename overlap
+- **blast-radius risk severity**: how many files transitively import a changed file, counted from the import graph
+- **IBM watsonx.ai / Granite finding prioritization**, constrained so the model can only reorder and explain DevFlow's own findings
+- **human-gated IBM Bob resolution** with two explicit approval boundaries
+- **deterministic validation** that runs the tests itself and can contradict Bob's claimed status
 
 Current limitations:
 
-- The full interactive Change Impact Map described in the architecture is not yet complete.
-- IBM Bob is not yet integrated into a production-style resolution workflow.
-- Repository Knowledge Graph remains an orientation concept rather than a dedicated interactive feature.
-- Phases 8 and beyond are not implemented yet and remain blocked per project task sequencing.
+- The extended multi-step agentic workflow (Phase 10) is not implemented.
+- Measurement (Phase 12) is partial.
+- Impact seeding still begins from Phase 2 keyword relevance; the import graph
+  expands and justifies that seed but does not yet replace how it is chosen.
 
 ---
 
@@ -104,13 +113,44 @@ Current limitations:
 pip install -e ".[dev]"
 ```
 
-### Run the local entry point
+### The `devflow` command
+
+Installing the package provides a `devflow` command covering the full journey:
 
 ```bash
-python -m devflow
+devflow analyze <repo-url> "<change description>"   # change     -> understand
+devflow findings [--top 5] [--json]                 # understand -> prioritize
+devflow resolve  <finding-id>                       # HUMAN GATE 1
+devflow apply    <resolution-id> <bob-output.md>    # HUMAN GATE 2
+devflow validate <resolution-id> --local-path <dir> \
+    --result <bob-result.md> --test-command "<cmd>" # verify, independently
 ```
 
-This entry point demonstrates the implemented phases and prints the current validation/demo status without requiring a live repository fetch for the basic example flow.
+Worked example:
+
+```bash
+devflow analyze https://github.com/pallets/flask "Refactor request context handling."
+devflow findings --top 5
+devflow resolve risk:0:code
+```
+
+Add `--serve` to `analyze` to open the interactive Change Impact Map, and
+`--no-watsonx` to force deterministic prioritization.
+
+`python -m devflow [url] "[change]"` continues to work unchanged.
+
+### Configuring IBM watsonx.ai (optional)
+
+Copy `.env.example` to `.env` and fill in your IBM Cloud values:
+
+```bash
+cp .env.example .env
+```
+
+`.env` is gitignored and must never be committed. Real environment variables
+always take precedence over the file. **Without credentials DevFlow still
+runs**: prioritization falls back to deterministic severity/evidence ordering
+and reports that it did so.
 
 ---
 
@@ -151,9 +191,10 @@ pytest
 
 Validated result:
 
-- 268 tests passed in the current repository state
+- 407 tests passed in the current repository state
 
-This reflects the implementation that exists today; it does not imply that later blocked phases are complete.
+Every test runs offline. The watsonx tests inject a fake transport, so no test
+requires credentials or makes a network call.
 
 ---
 
@@ -190,23 +231,59 @@ The structure is intentionally modular:
 
 ---
 
-## IBM Bob's intended role
+## IBM technology map
 
-IBM Bob is intended to enter the workflow at the later resolution stage, not to replace the core analysis pipeline.
+Each technology owns one responsibility. Nothing is included for branding.
 
-Current capability:
+### DevFlow (deterministic Python) — owns every fact
 
-- The codebase does not yet integrate Bob into a working resolution workflow.
-- Bob is not used as a required part of the implemented repository analysis pipeline.
+Cloning, file classification, AST import parsing, transitive dependents, test
+association, git history, impact findings, risk findings, the graph, the
+report, the approval-gate state machine, test execution, `git diff`, and
+outcome reconciliation. **No language model writes into any of these.**
 
-Planned role:
+### IBM Bob — owns the code change
 
-- investigate an approved finding
-- propose a focused fix
-- validate the fix with relevant tests
-- report what changed and why
+Bob enters at resolution, not analysis. Using the `resolver` custom mode in
+`.bob/custom_modes.yaml`, Bob investigates an approved finding, proposes a
+focused fix, and implements it after a second human approval. DevFlow owns the
+gates and the verification on either side.
 
-This is part of the planned Phase 8 workflow and remains future work.
+Bob task-session evidence is preserved under `bob_sessions/`.
+
+### IBM watsonx.ai / Granite — owns one judgment call
+
+**Problem it solves.** DevFlow can produce dozens of evidence-backed findings.
+Severity alone does not answer *"which do I investigate first, and why?"* —
+cross-category comparison is a judgment task, not a deterministic one.
+
+**What it receives.** Only DevFlow's own structured findings: identifiers,
+categories, severities, evidence types and counts, affected artifacts. It never
+receives repository source code and is never asked to state a fact.
+
+**What it returns.** A ranking of those findings with a one-sentence rationale
+each, as strict JSON.
+
+**How its authority is bounded** — enforced in code, not by prompt wording:
+
+| Guarantee | Mechanism |
+|---|---|
+| Cannot invent a finding | Returned IDs must be a subset of DevFlow's; unknown IDs are discarded **and recorded** |
+| Cannot hide a finding | Anything the model omits is appended in deterministic order |
+| Cannot restate a fact | Severity and title are always taken from DevFlow, never from the response |
+| Cannot be silently trusted | Every entry is labelled `watsonx` or `deterministic` |
+| Cannot break the pipeline | Any failure falls back to deterministic ordering and says why |
+| Cannot use an out-of-scope model | The three models the hackathon guide excludes are refused |
+
+Model: `ibm/granite-4-h-small` via the watsonx.ai chat endpoint (Dallas).
+Credentials come from environment variables or a gitignored `.env`.
+
+### watsonx Orchestrate — deliberately not used
+
+DevFlow's orchestration is a deterministic five-stage pipeline plus two human
+approval gates. Repository facts must be reproducible, so moving that control
+flow into a hosted workflow engine would add latency and failure modes while
+removing nothing. Orchestrate was evaluated and rejected on that basis.
 
 ---
 

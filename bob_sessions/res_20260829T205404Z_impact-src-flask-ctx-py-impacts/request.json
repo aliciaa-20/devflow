@@ -1,0 +1,40 @@
+{
+  "id": "res_20260829T205404Z_impact-src-flask-ctx-py-impacts",
+  "repository_url": "https://github.com/pallets/flask",
+  "owner": "pallets",
+  "name": "flask",
+  "change_summary": "Refactor request context handling.",
+  "finding_id": "impact:src/flask/ctx.py:impacts",
+  "finding_snapshot": {
+    "id": "impact:src/flask/ctx.py:impacts",
+    "category": "impact",
+    "title": "src/flask/ctx.py",
+    "description": "Source file 'src/flask/ctx.py' may be affected by the change ('Refactor request context handling.').",
+    "affected_artifacts": [
+      "src/flask/ctx.py"
+    ],
+    "relationship": "impacts",
+    "potential_impact": "Source file 'src/flask/ctx.py' may be affected by the change ('Refactor request context handling.').",
+    "severity": null,
+    "evidence": [
+      {
+        "artifact": "src/flask/ctx.py",
+        "description": "Phase 2 identified 'src/flask/ctx.py' as relevant (reason: keyword_match; confidence: likely). Evidence: path keywords ['ctx'] match change keywords",
+        "evidence_type": "DERIVED_RELATIONSHIP",
+        "confidence": "likely"
+      }
+    ],
+    "evidence_strength": "likely",
+    "is_inference": false,
+    "recommendation": null,
+    "graph_node_id": "artifact:src/flask/ctx.py"
+  },
+  "graph_node_id": "artifact:src/flask/ctx.py",
+  "status": "requested",
+  "created_at": "2026-08-29T20:54:04Z",
+  "investigate_gate": null,
+  "proposed_fix": null,
+  "apply_gate": null,
+  "outcome": null,
+  "error": null
+}

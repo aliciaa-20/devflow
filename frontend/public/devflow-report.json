@@ -5,7 +5,7 @@
   "change_summary": "Refactor request context handling.",
   "changed_files": [],
   "error": null,
-  "generated_at": "2026-08-29T15:09:16Z",
+  "generated_at": "2026-08-30T06:31:19Z",
   "sections": {
     "change": {
       "summary": "Refactor request context handling.",
@@ -89,8 +89,224 @@
       ]
     },
     "impact": {
-      "finding_count": 6,
+      "finding_count": 34,
       "findings": [
+        {
+          "id": "impact:src/flask/__init__.py:impacts",
+          "category": "impact",
+          "title": "src/flask/__init__.py",
+          "description": "'src/flask/__init__.py' directly imports 'src/flask/ctx.py' and is exposed to any behavioral change in it.",
+          "affected_artifacts": [
+            "src/flask/__init__.py"
+          ],
+          "relationship": "impacts",
+          "potential_impact": "'src/flask/__init__.py' directly imports 'src/flask/ctx.py' and is exposed to any behavioral change in it.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/__init__.py",
+              "description": "Static import edge: 'src/flask/__init__.py' imports 'src/flask/ctx.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            }
+          ],
+          "evidence_strength": "confirmed",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/__init__.py"
+        },
+        {
+          "id": "impact:src/flask/app.py:impacts",
+          "category": "impact",
+          "title": "src/flask/app.py",
+          "description": "'src/flask/app.py' directly imports 'src/flask/ctx.py' and is exposed to any behavioral change in it.",
+          "affected_artifacts": [
+            "src/flask/app.py"
+          ],
+          "relationship": "impacts",
+          "potential_impact": "'src/flask/app.py' directly imports 'src/flask/ctx.py' and is exposed to any behavioral change in it.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/app.py",
+              "description": "Static import edge: 'src/flask/app.py' imports 'src/flask/ctx.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            }
+          ],
+          "evidence_strength": "confirmed",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/app.py"
+        },
+        {
+          "id": "impact:src/flask/globals.py:impacts",
+          "category": "impact",
+          "title": "src/flask/globals.py",
+          "description": "'src/flask/globals.py' directly imports 'src/flask/ctx.py' and is exposed to any behavioral change in it.",
+          "affected_artifacts": [
+            "src/flask/globals.py"
+          ],
+          "relationship": "impacts",
+          "potential_impact": "'src/flask/globals.py' directly imports 'src/flask/ctx.py' and is exposed to any behavioral change in it.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/globals.py",
+              "description": "Static import edge: 'src/flask/globals.py' imports 'src/flask/ctx.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            }
+          ],
+          "evidence_strength": "confirmed",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/globals.py"
+        },
+        {
+          "id": "impact:src/flask/sansio/app.py:impacts",
+          "category": "impact",
+          "title": "src/flask/sansio/app.py",
+          "description": "'src/flask/sansio/app.py' directly imports 'src/flask/ctx.py' and is exposed to any behavioral change in it.",
+          "affected_artifacts": [
+            "src/flask/sansio/app.py"
+          ],
+          "relationship": "impacts",
+          "potential_impact": "'src/flask/sansio/app.py' directly imports 'src/flask/ctx.py' and is exposed to any behavioral change in it.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/sansio/app.py",
+              "description": "Static import edge: 'src/flask/sansio/app.py' imports 'src/flask/ctx.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            }
+          ],
+          "evidence_strength": "confirmed",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/sansio/app.py"
+        },
+        {
+          "id": "impact:src/flask/templating.py:impacts",
+          "category": "impact",
+          "title": "src/flask/templating.py",
+          "description": "'src/flask/templating.py' directly imports 'src/flask/ctx.py' and is exposed to any behavioral change in it.",
+          "affected_artifacts": [
+            "src/flask/templating.py"
+          ],
+          "relationship": "impacts",
+          "potential_impact": "'src/flask/templating.py' directly imports 'src/flask/ctx.py' and is exposed to any behavioral change in it.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/templating.py",
+              "description": "Static import edge: 'src/flask/templating.py' imports 'src/flask/ctx.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            }
+          ],
+          "evidence_strength": "confirmed",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/templating.py"
+        },
+        {
+          "id": "impact:src/flask/app.py:imports",
+          "category": "impact",
+          "title": "src/flask/app.py",
+          "description": "'src/flask/ctx.py' imports 'src/flask/app.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/app.py'.",
+          "affected_artifacts": [
+            "src/flask/app.py"
+          ],
+          "relationship": "imports",
+          "potential_impact": "'src/flask/ctx.py' imports 'src/flask/app.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/app.py'.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/app.py",
+              "description": "Static import edge: 'src/flask/ctx.py' imports 'src/flask/app.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/app.py"
+        },
+        {
+          "id": "impact:src/flask/blueprints.py:impacts",
+          "category": "impact",
+          "title": "src/flask/blueprints.py",
+          "description": "'src/flask/blueprints.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "affected_artifacts": [
+            "src/flask/blueprints.py"
+          ],
+          "relationship": "impacts",
+          "potential_impact": "'src/flask/blueprints.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/blueprints.py",
+              "description": "Transitive import chain: 'src/flask/blueprints.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/blueprints.py"
+        },
+        {
+          "id": "impact:src/flask/cli.py:impacts",
+          "category": "impact",
+          "title": "src/flask/cli.py",
+          "description": "'src/flask/cli.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "affected_artifacts": [
+            "src/flask/cli.py"
+          ],
+          "relationship": "impacts",
+          "potential_impact": "'src/flask/cli.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/cli.py",
+              "description": "Transitive import chain: 'src/flask/cli.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/cli.py"
+        },
+        {
+          "id": "impact:src/flask/config.py:impacts",
+          "category": "impact",
+          "title": "src/flask/config.py",
+          "description": "'src/flask/config.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "affected_artifacts": [
+            "src/flask/config.py"
+          ],
+          "relationship": "impacts",
+          "potential_impact": "'src/flask/config.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/config.py",
+              "description": "Transitive import chain: 'src/flask/config.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/config.py"
+        },
         {
           "id": "impact:src/flask/ctx.py:impacts",
           "category": "impact",
@@ -114,6 +330,462 @@
           "is_inference": false,
           "recommendation": null,
           "graph_node_id": "artifact:src/flask/ctx.py"
+        },
+        {
+          "id": "impact:src/flask/debughelpers.py:impacts",
+          "category": "impact",
+          "title": "src/flask/debughelpers.py",
+          "description": "'src/flask/debughelpers.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "affected_artifacts": [
+            "src/flask/debughelpers.py"
+          ],
+          "relationship": "impacts",
+          "potential_impact": "'src/flask/debughelpers.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/debughelpers.py",
+              "description": "Transitive import chain: 'src/flask/debughelpers.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/debughelpers.py"
+        },
+        {
+          "id": "impact:src/flask/globals.py:imports",
+          "category": "impact",
+          "title": "src/flask/globals.py",
+          "description": "'src/flask/ctx.py' imports 'src/flask/globals.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/globals.py'.",
+          "affected_artifacts": [
+            "src/flask/globals.py"
+          ],
+          "relationship": "imports",
+          "potential_impact": "'src/flask/ctx.py' imports 'src/flask/globals.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/globals.py'.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/globals.py",
+              "description": "Static import edge: 'src/flask/ctx.py' imports 'src/flask/globals.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/globals.py"
+        },
+        {
+          "id": "impact:src/flask/helpers.py:imports",
+          "category": "impact",
+          "title": "src/flask/helpers.py",
+          "description": "'src/flask/ctx.py' imports 'src/flask/helpers.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/helpers.py'.",
+          "affected_artifacts": [
+            "src/flask/helpers.py"
+          ],
+          "relationship": "imports",
+          "potential_impact": "'src/flask/ctx.py' imports 'src/flask/helpers.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/helpers.py'.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/helpers.py",
+              "description": "Static import edge: 'src/flask/ctx.py' imports 'src/flask/helpers.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/helpers.py"
+        },
+        {
+          "id": "impact:src/flask/helpers.py:impacts",
+          "category": "impact",
+          "title": "src/flask/helpers.py",
+          "description": "'src/flask/helpers.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "affected_artifacts": [
+            "src/flask/helpers.py"
+          ],
+          "relationship": "impacts",
+          "potential_impact": "'src/flask/helpers.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/helpers.py",
+              "description": "Transitive import chain: 'src/flask/helpers.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/helpers.py"
+        },
+        {
+          "id": "impact:src/flask/json/__init__.py:impacts",
+          "category": "impact",
+          "title": "src/flask/json/__init__.py",
+          "description": "'src/flask/json/__init__.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "affected_artifacts": [
+            "src/flask/json/__init__.py"
+          ],
+          "relationship": "impacts",
+          "potential_impact": "'src/flask/json/__init__.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/json/__init__.py",
+              "description": "Transitive import chain: 'src/flask/json/__init__.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/json/__init__.py"
+        },
+        {
+          "id": "impact:src/flask/json/provider.py:impacts",
+          "category": "impact",
+          "title": "src/flask/json/provider.py",
+          "description": "'src/flask/json/provider.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "affected_artifacts": [
+            "src/flask/json/provider.py"
+          ],
+          "relationship": "impacts",
+          "potential_impact": "'src/flask/json/provider.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/json/provider.py",
+              "description": "Transitive import chain: 'src/flask/json/provider.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/json/provider.py"
+        },
+        {
+          "id": "impact:src/flask/logging.py:impacts",
+          "category": "impact",
+          "title": "src/flask/logging.py",
+          "description": "'src/flask/logging.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "affected_artifacts": [
+            "src/flask/logging.py"
+          ],
+          "relationship": "impacts",
+          "potential_impact": "'src/flask/logging.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/logging.py",
+              "description": "Transitive import chain: 'src/flask/logging.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/logging.py"
+        },
+        {
+          "id": "impact:src/flask/sansio/blueprints.py:impacts",
+          "category": "impact",
+          "title": "src/flask/sansio/blueprints.py",
+          "description": "'src/flask/sansio/blueprints.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "affected_artifacts": [
+            "src/flask/sansio/blueprints.py"
+          ],
+          "relationship": "impacts",
+          "potential_impact": "'src/flask/sansio/blueprints.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/sansio/blueprints.py",
+              "description": "Transitive import chain: 'src/flask/sansio/blueprints.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/sansio/blueprints.py"
+        },
+        {
+          "id": "impact:src/flask/sansio/scaffold.py:impacts",
+          "category": "impact",
+          "title": "src/flask/sansio/scaffold.py",
+          "description": "'src/flask/sansio/scaffold.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "affected_artifacts": [
+            "src/flask/sansio/scaffold.py"
+          ],
+          "relationship": "impacts",
+          "potential_impact": "'src/flask/sansio/scaffold.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/sansio/scaffold.py",
+              "description": "Transitive import chain: 'src/flask/sansio/scaffold.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/sansio/scaffold.py"
+        },
+        {
+          "id": "impact:src/flask/sessions.py:imports",
+          "category": "impact",
+          "title": "src/flask/sessions.py",
+          "description": "'src/flask/ctx.py' imports 'src/flask/sessions.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/sessions.py'.",
+          "affected_artifacts": [
+            "src/flask/sessions.py"
+          ],
+          "relationship": "imports",
+          "potential_impact": "'src/flask/ctx.py' imports 'src/flask/sessions.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/sessions.py'.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/sessions.py",
+              "description": "Static import edge: 'src/flask/ctx.py' imports 'src/flask/sessions.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/sessions.py"
+        },
+        {
+          "id": "impact:src/flask/sessions.py:impacts",
+          "category": "impact",
+          "title": "src/flask/sessions.py",
+          "description": "'src/flask/sessions.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "affected_artifacts": [
+            "src/flask/sessions.py"
+          ],
+          "relationship": "impacts",
+          "potential_impact": "'src/flask/sessions.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/sessions.py",
+              "description": "Transitive import chain: 'src/flask/sessions.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/sessions.py"
+        },
+        {
+          "id": "impact:src/flask/signals.py:imports",
+          "category": "impact",
+          "title": "src/flask/signals.py",
+          "description": "'src/flask/ctx.py' imports 'src/flask/signals.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/signals.py'.",
+          "affected_artifacts": [
+            "src/flask/signals.py"
+          ],
+          "relationship": "imports",
+          "potential_impact": "'src/flask/ctx.py' imports 'src/flask/signals.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/signals.py'.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/signals.py",
+              "description": "Static import edge: 'src/flask/ctx.py' imports 'src/flask/signals.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/signals.py"
+        },
+        {
+          "id": "impact:src/flask/testing.py:impacts",
+          "category": "impact",
+          "title": "src/flask/testing.py",
+          "description": "'src/flask/testing.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "affected_artifacts": [
+            "src/flask/testing.py"
+          ],
+          "relationship": "impacts",
+          "potential_impact": "'src/flask/testing.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/testing.py",
+              "description": "Transitive import chain: 'src/flask/testing.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/testing.py"
+        },
+        {
+          "id": "impact:src/flask/typing.py:imports",
+          "category": "impact",
+          "title": "src/flask/typing.py",
+          "description": "'src/flask/ctx.py' imports 'src/flask/typing.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/typing.py'.",
+          "affected_artifacts": [
+            "src/flask/typing.py"
+          ],
+          "relationship": "imports",
+          "potential_impact": "'src/flask/ctx.py' imports 'src/flask/typing.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/typing.py'.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/typing.py",
+              "description": "Static import edge: 'src/flask/ctx.py' imports 'src/flask/typing.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/typing.py"
+        },
+        {
+          "id": "impact:src/flask/views.py:impacts",
+          "category": "impact",
+          "title": "src/flask/views.py",
+          "description": "'src/flask/views.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "affected_artifacts": [
+            "src/flask/views.py"
+          ],
+          "relationship": "impacts",
+          "potential_impact": "'src/flask/views.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/views.py",
+              "description": "Transitive import chain: 'src/flask/views.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/views.py"
+        },
+        {
+          "id": "impact:src/flask/wrappers.py:imports",
+          "category": "impact",
+          "title": "src/flask/wrappers.py",
+          "description": "'src/flask/ctx.py' imports 'src/flask/wrappers.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/wrappers.py'.",
+          "affected_artifacts": [
+            "src/flask/wrappers.py"
+          ],
+          "relationship": "imports",
+          "potential_impact": "'src/flask/ctx.py' imports 'src/flask/wrappers.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/wrappers.py'.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/wrappers.py",
+              "description": "Static import edge: 'src/flask/ctx.py' imports 'src/flask/wrappers.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/wrappers.py"
+        },
+        {
+          "id": "impact:src/flask/wrappers.py:impacts",
+          "category": "impact",
+          "title": "src/flask/wrappers.py",
+          "description": "'src/flask/wrappers.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "affected_artifacts": [
+            "src/flask/wrappers.py"
+          ],
+          "relationship": "impacts",
+          "potential_impact": "'src/flask/wrappers.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "src/flask/wrappers.py",
+              "description": "Transitive import chain: 'src/flask/wrappers.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:src/flask/wrappers.py"
+        },
+        {
+          "id": "impact:tests/test_appctx.py:tested_by",
+          "category": "impact",
+          "title": "tests/test_appctx.py",
+          "description": "Test 'tests/test_appctx.py' is structurally associated with 'src/flask/ctx.py' and should be re-run after the change.",
+          "affected_artifacts": [
+            "tests/test_appctx.py"
+          ],
+          "relationship": "tested_by",
+          "potential_impact": "Test 'tests/test_appctx.py' is structurally associated with 'src/flask/ctx.py' and should be re-run after the change.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "tests/test_appctx.py",
+              "description": "Repository graph test association: 'src/flask/ctx.py' is tested by 'tests/test_appctx.py' (DIRECT_EVIDENCE: derived from repository structure).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:tests/test_appctx.py"
+        },
+        {
+          "id": "impact:tests/test_reqctx.py:tested_by",
+          "category": "impact",
+          "title": "tests/test_reqctx.py",
+          "description": "Test 'tests/test_reqctx.py' is structurally associated with 'src/flask/ctx.py' and should be re-run after the change.",
+          "affected_artifacts": [
+            "tests/test_reqctx.py"
+          ],
+          "relationship": "tested_by",
+          "potential_impact": "Test 'tests/test_reqctx.py' is structurally associated with 'src/flask/ctx.py' and should be re-run after the change.",
+          "severity": null,
+          "evidence": [
+            {
+              "artifact": "tests/test_reqctx.py",
+              "description": "Repository graph test association: 'src/flask/ctx.py' is tested by 'tests/test_reqctx.py' (DIRECT_EVIDENCE: derived from repository structure).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": null,
+          "graph_node_id": "artifact:tests/test_reqctx.py"
         },
         {
           "id": "impact:src/flask/ctx.py:historically_changed_with",
@@ -543,9 +1215,114 @@
       ]
     },
     "risk": {
-      "finding_count": 0,
-      "highest_severity": null,
-      "findings": []
+      "finding_count": 3,
+      "highest_severity": "high",
+      "findings": [
+        {
+          "id": "risk:0:code",
+          "category": "risk",
+          "title": "HIGH code risk",
+          "description": "'src/flask/ctx.py' was identified as relevant to the requested change and is present in the repository's import graph. 21 file(s) depend on it through real import edges, so a behavioral change here is not locally contained. Any behavioral consequence requires review; no defect is established.",
+          "affected_artifacts": [
+            "src/flask/ctx.py"
+          ],
+          "relationship": null,
+          "potential_impact": null,
+          "severity": "high",
+          "evidence": [
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "Phase 2 identified 'src/flask/ctx.py' as relevant (reason: keyword_match; confidence: likely). Evidence: path keywords ['ctx'] match change keywords",
+              "evidence_type": "DERIVED_RELATIONSHIP",
+              "confidence": "likely"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "21 file(s) reach 'src/flask/ctx.py' through static import edges parsed from repository source: src/flask/__init__.py, src/flask/__main__.py, src/flask/app.py, src/flask/blueprints.py, src/flask/cli.py, and 16 more (DIRECT_EVIDENCE: repository import graph).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": true,
+          "recommendation": "Review the changed code path and its importing callers before merging.",
+          "graph_node_id": "risk:0:code"
+        },
+        {
+          "id": "risk:1:historical",
+          "category": "risk",
+          "title": "MEDIUM historical risk",
+          "description": "'src/flask/ctx.py' has 12 recorded commits and is explicitly changing. Repeated historical modification can indicate an area worth closer review; it does not establish a past defect.",
+          "affected_artifacts": [
+            "src/flask/ctx.py"
+          ],
+          "relationship": null,
+          "potential_impact": null,
+          "severity": "medium",
+          "evidence": [
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "Git commit 06ea505 modified 'src/flask/ctx.py': 'separate copy per call' (DIRECT_EVIDENCE: git log).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "Git commit a29f88c modified 'src/flask/ctx.py': 'document that headers must be set before streaming' (DIRECT_EVIDENCE: git log).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            },
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "Git commit fbb6f0b modified 'src/flask/ctx.py': 'all teardown callbacks are called despite errors' (DIRECT_EVIDENCE: git log).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "confirmed"
+            }
+          ],
+          "evidence_strength": "confirmed",
+          "is_inference": false,
+          "recommendation": "Review the cited commits for constraints and re-run behavior affected by the change.",
+          "graph_node_id": "risk:1:historical"
+        },
+        {
+          "id": "risk:2:regression",
+          "category": "risk",
+          "title": "MEDIUM regression risk",
+          "description": "'src/flask/ctx.py' is changing and tests/test_appctx.py, tests/test_reqctx.py is structurally associated with it. The association is derived from filenames, so regression exposure is inferred.",
+          "affected_artifacts": [
+            "src/flask/ctx.py",
+            "tests/test_appctx.py",
+            "tests/test_reqctx.py"
+          ],
+          "relationship": null,
+          "potential_impact": null,
+          "severity": "medium",
+          "evidence": [
+            {
+              "artifact": "src/flask/ctx.py",
+              "description": "Phase 2 identified 'src/flask/ctx.py' as relevant (reason: keyword_match; confidence: likely). Evidence: path keywords ['ctx'] match change keywords",
+              "evidence_type": "DERIVED_RELATIONSHIP",
+              "confidence": "likely"
+            },
+            {
+              "artifact": "tests/test_appctx.py",
+              "description": "Repository graph test association: 'src/flask/ctx.py' is tested by 'tests/test_appctx.py' (DIRECT_EVIDENCE: derived from repository structure).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            },
+            {
+              "artifact": "tests/test_reqctx.py",
+              "description": "Repository graph test association: 'src/flask/ctx.py' is tested by 'tests/test_reqctx.py' (DIRECT_EVIDENCE: derived from repository structure).",
+              "evidence_type": "DIRECT_EVIDENCE",
+              "confidence": "likely"
+            }
+          ],
+          "evidence_strength": "likely",
+          "is_inference": false,
+          "recommendation": "Run the associated tests and add coverage for changed behavior if needed.",
+          "graph_node_id": "risk:2:regression"
+        }
+      ]
     }
   },
   "findings": [
@@ -622,6 +1399,222 @@
       "graph_node_id": "artifact:tests/test_request.py"
     },
     {
+      "id": "impact:src/flask/__init__.py:impacts",
+      "category": "impact",
+      "title": "src/flask/__init__.py",
+      "description": "'src/flask/__init__.py' directly imports 'src/flask/ctx.py' and is exposed to any behavioral change in it.",
+      "affected_artifacts": [
+        "src/flask/__init__.py"
+      ],
+      "relationship": "impacts",
+      "potential_impact": "'src/flask/__init__.py' directly imports 'src/flask/ctx.py' and is exposed to any behavioral change in it.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/__init__.py",
+          "description": "Static import edge: 'src/flask/__init__.py' imports 'src/flask/ctx.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        }
+      ],
+      "evidence_strength": "confirmed",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/__init__.py"
+    },
+    {
+      "id": "impact:src/flask/app.py:impacts",
+      "category": "impact",
+      "title": "src/flask/app.py",
+      "description": "'src/flask/app.py' directly imports 'src/flask/ctx.py' and is exposed to any behavioral change in it.",
+      "affected_artifacts": [
+        "src/flask/app.py"
+      ],
+      "relationship": "impacts",
+      "potential_impact": "'src/flask/app.py' directly imports 'src/flask/ctx.py' and is exposed to any behavioral change in it.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/app.py",
+          "description": "Static import edge: 'src/flask/app.py' imports 'src/flask/ctx.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        }
+      ],
+      "evidence_strength": "confirmed",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/app.py"
+    },
+    {
+      "id": "impact:src/flask/globals.py:impacts",
+      "category": "impact",
+      "title": "src/flask/globals.py",
+      "description": "'src/flask/globals.py' directly imports 'src/flask/ctx.py' and is exposed to any behavioral change in it.",
+      "affected_artifacts": [
+        "src/flask/globals.py"
+      ],
+      "relationship": "impacts",
+      "potential_impact": "'src/flask/globals.py' directly imports 'src/flask/ctx.py' and is exposed to any behavioral change in it.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/globals.py",
+          "description": "Static import edge: 'src/flask/globals.py' imports 'src/flask/ctx.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        }
+      ],
+      "evidence_strength": "confirmed",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/globals.py"
+    },
+    {
+      "id": "impact:src/flask/sansio/app.py:impacts",
+      "category": "impact",
+      "title": "src/flask/sansio/app.py",
+      "description": "'src/flask/sansio/app.py' directly imports 'src/flask/ctx.py' and is exposed to any behavioral change in it.",
+      "affected_artifacts": [
+        "src/flask/sansio/app.py"
+      ],
+      "relationship": "impacts",
+      "potential_impact": "'src/flask/sansio/app.py' directly imports 'src/flask/ctx.py' and is exposed to any behavioral change in it.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/sansio/app.py",
+          "description": "Static import edge: 'src/flask/sansio/app.py' imports 'src/flask/ctx.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        }
+      ],
+      "evidence_strength": "confirmed",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/sansio/app.py"
+    },
+    {
+      "id": "impact:src/flask/templating.py:impacts",
+      "category": "impact",
+      "title": "src/flask/templating.py",
+      "description": "'src/flask/templating.py' directly imports 'src/flask/ctx.py' and is exposed to any behavioral change in it.",
+      "affected_artifacts": [
+        "src/flask/templating.py"
+      ],
+      "relationship": "impacts",
+      "potential_impact": "'src/flask/templating.py' directly imports 'src/flask/ctx.py' and is exposed to any behavioral change in it.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/templating.py",
+          "description": "Static import edge: 'src/flask/templating.py' imports 'src/flask/ctx.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        }
+      ],
+      "evidence_strength": "confirmed",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/templating.py"
+    },
+    {
+      "id": "impact:src/flask/app.py:imports",
+      "category": "impact",
+      "title": "src/flask/app.py",
+      "description": "'src/flask/ctx.py' imports 'src/flask/app.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/app.py'.",
+      "affected_artifacts": [
+        "src/flask/app.py"
+      ],
+      "relationship": "imports",
+      "potential_impact": "'src/flask/ctx.py' imports 'src/flask/app.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/app.py'.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/app.py",
+          "description": "Static import edge: 'src/flask/ctx.py' imports 'src/flask/app.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/app.py"
+    },
+    {
+      "id": "impact:src/flask/blueprints.py:impacts",
+      "category": "impact",
+      "title": "src/flask/blueprints.py",
+      "description": "'src/flask/blueprints.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "affected_artifacts": [
+        "src/flask/blueprints.py"
+      ],
+      "relationship": "impacts",
+      "potential_impact": "'src/flask/blueprints.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/blueprints.py",
+          "description": "Transitive import chain: 'src/flask/blueprints.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/blueprints.py"
+    },
+    {
+      "id": "impact:src/flask/cli.py:impacts",
+      "category": "impact",
+      "title": "src/flask/cli.py",
+      "description": "'src/flask/cli.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "affected_artifacts": [
+        "src/flask/cli.py"
+      ],
+      "relationship": "impacts",
+      "potential_impact": "'src/flask/cli.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/cli.py",
+          "description": "Transitive import chain: 'src/flask/cli.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/cli.py"
+    },
+    {
+      "id": "impact:src/flask/config.py:impacts",
+      "category": "impact",
+      "title": "src/flask/config.py",
+      "description": "'src/flask/config.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "affected_artifacts": [
+        "src/flask/config.py"
+      ],
+      "relationship": "impacts",
+      "potential_impact": "'src/flask/config.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/config.py",
+          "description": "Transitive import chain: 'src/flask/config.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/config.py"
+    },
+    {
       "id": "impact:src/flask/ctx.py:impacts",
       "category": "impact",
       "title": "src/flask/ctx.py",
@@ -644,6 +1637,462 @@
       "is_inference": false,
       "recommendation": null,
       "graph_node_id": "artifact:src/flask/ctx.py"
+    },
+    {
+      "id": "impact:src/flask/debughelpers.py:impacts",
+      "category": "impact",
+      "title": "src/flask/debughelpers.py",
+      "description": "'src/flask/debughelpers.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "affected_artifacts": [
+        "src/flask/debughelpers.py"
+      ],
+      "relationship": "impacts",
+      "potential_impact": "'src/flask/debughelpers.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/debughelpers.py",
+          "description": "Transitive import chain: 'src/flask/debughelpers.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/debughelpers.py"
+    },
+    {
+      "id": "impact:src/flask/globals.py:imports",
+      "category": "impact",
+      "title": "src/flask/globals.py",
+      "description": "'src/flask/ctx.py' imports 'src/flask/globals.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/globals.py'.",
+      "affected_artifacts": [
+        "src/flask/globals.py"
+      ],
+      "relationship": "imports",
+      "potential_impact": "'src/flask/ctx.py' imports 'src/flask/globals.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/globals.py'.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/globals.py",
+          "description": "Static import edge: 'src/flask/ctx.py' imports 'src/flask/globals.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/globals.py"
+    },
+    {
+      "id": "impact:src/flask/helpers.py:imports",
+      "category": "impact",
+      "title": "src/flask/helpers.py",
+      "description": "'src/flask/ctx.py' imports 'src/flask/helpers.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/helpers.py'.",
+      "affected_artifacts": [
+        "src/flask/helpers.py"
+      ],
+      "relationship": "imports",
+      "potential_impact": "'src/flask/ctx.py' imports 'src/flask/helpers.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/helpers.py'.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/helpers.py",
+          "description": "Static import edge: 'src/flask/ctx.py' imports 'src/flask/helpers.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/helpers.py"
+    },
+    {
+      "id": "impact:src/flask/helpers.py:impacts",
+      "category": "impact",
+      "title": "src/flask/helpers.py",
+      "description": "'src/flask/helpers.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "affected_artifacts": [
+        "src/flask/helpers.py"
+      ],
+      "relationship": "impacts",
+      "potential_impact": "'src/flask/helpers.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/helpers.py",
+          "description": "Transitive import chain: 'src/flask/helpers.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/helpers.py"
+    },
+    {
+      "id": "impact:src/flask/json/__init__.py:impacts",
+      "category": "impact",
+      "title": "src/flask/json/__init__.py",
+      "description": "'src/flask/json/__init__.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "affected_artifacts": [
+        "src/flask/json/__init__.py"
+      ],
+      "relationship": "impacts",
+      "potential_impact": "'src/flask/json/__init__.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/json/__init__.py",
+          "description": "Transitive import chain: 'src/flask/json/__init__.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/json/__init__.py"
+    },
+    {
+      "id": "impact:src/flask/json/provider.py:impacts",
+      "category": "impact",
+      "title": "src/flask/json/provider.py",
+      "description": "'src/flask/json/provider.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "affected_artifacts": [
+        "src/flask/json/provider.py"
+      ],
+      "relationship": "impacts",
+      "potential_impact": "'src/flask/json/provider.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/json/provider.py",
+          "description": "Transitive import chain: 'src/flask/json/provider.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/json/provider.py"
+    },
+    {
+      "id": "impact:src/flask/logging.py:impacts",
+      "category": "impact",
+      "title": "src/flask/logging.py",
+      "description": "'src/flask/logging.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "affected_artifacts": [
+        "src/flask/logging.py"
+      ],
+      "relationship": "impacts",
+      "potential_impact": "'src/flask/logging.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/logging.py",
+          "description": "Transitive import chain: 'src/flask/logging.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/logging.py"
+    },
+    {
+      "id": "impact:src/flask/sansio/blueprints.py:impacts",
+      "category": "impact",
+      "title": "src/flask/sansio/blueprints.py",
+      "description": "'src/flask/sansio/blueprints.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "affected_artifacts": [
+        "src/flask/sansio/blueprints.py"
+      ],
+      "relationship": "impacts",
+      "potential_impact": "'src/flask/sansio/blueprints.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/sansio/blueprints.py",
+          "description": "Transitive import chain: 'src/flask/sansio/blueprints.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/sansio/blueprints.py"
+    },
+    {
+      "id": "impact:src/flask/sansio/scaffold.py:impacts",
+      "category": "impact",
+      "title": "src/flask/sansio/scaffold.py",
+      "description": "'src/flask/sansio/scaffold.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "affected_artifacts": [
+        "src/flask/sansio/scaffold.py"
+      ],
+      "relationship": "impacts",
+      "potential_impact": "'src/flask/sansio/scaffold.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/sansio/scaffold.py",
+          "description": "Transitive import chain: 'src/flask/sansio/scaffold.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/sansio/scaffold.py"
+    },
+    {
+      "id": "impact:src/flask/sessions.py:imports",
+      "category": "impact",
+      "title": "src/flask/sessions.py",
+      "description": "'src/flask/ctx.py' imports 'src/flask/sessions.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/sessions.py'.",
+      "affected_artifacts": [
+        "src/flask/sessions.py"
+      ],
+      "relationship": "imports",
+      "potential_impact": "'src/flask/ctx.py' imports 'src/flask/sessions.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/sessions.py'.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/sessions.py",
+          "description": "Static import edge: 'src/flask/ctx.py' imports 'src/flask/sessions.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/sessions.py"
+    },
+    {
+      "id": "impact:src/flask/sessions.py:impacts",
+      "category": "impact",
+      "title": "src/flask/sessions.py",
+      "description": "'src/flask/sessions.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "affected_artifacts": [
+        "src/flask/sessions.py"
+      ],
+      "relationship": "impacts",
+      "potential_impact": "'src/flask/sessions.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/sessions.py",
+          "description": "Transitive import chain: 'src/flask/sessions.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/sessions.py"
+    },
+    {
+      "id": "impact:src/flask/signals.py:imports",
+      "category": "impact",
+      "title": "src/flask/signals.py",
+      "description": "'src/flask/ctx.py' imports 'src/flask/signals.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/signals.py'.",
+      "affected_artifacts": [
+        "src/flask/signals.py"
+      ],
+      "relationship": "imports",
+      "potential_impact": "'src/flask/ctx.py' imports 'src/flask/signals.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/signals.py'.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/signals.py",
+          "description": "Static import edge: 'src/flask/ctx.py' imports 'src/flask/signals.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/signals.py"
+    },
+    {
+      "id": "impact:src/flask/testing.py:impacts",
+      "category": "impact",
+      "title": "src/flask/testing.py",
+      "description": "'src/flask/testing.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "affected_artifacts": [
+        "src/flask/testing.py"
+      ],
+      "relationship": "impacts",
+      "potential_impact": "'src/flask/testing.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/testing.py",
+          "description": "Transitive import chain: 'src/flask/testing.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/testing.py"
+    },
+    {
+      "id": "impact:src/flask/typing.py:imports",
+      "category": "impact",
+      "title": "src/flask/typing.py",
+      "description": "'src/flask/ctx.py' imports 'src/flask/typing.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/typing.py'.",
+      "affected_artifacts": [
+        "src/flask/typing.py"
+      ],
+      "relationship": "imports",
+      "potential_impact": "'src/flask/ctx.py' imports 'src/flask/typing.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/typing.py'.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/typing.py",
+          "description": "Static import edge: 'src/flask/ctx.py' imports 'src/flask/typing.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/typing.py"
+    },
+    {
+      "id": "impact:src/flask/views.py:impacts",
+      "category": "impact",
+      "title": "src/flask/views.py",
+      "description": "'src/flask/views.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "affected_artifacts": [
+        "src/flask/views.py"
+      ],
+      "relationship": "impacts",
+      "potential_impact": "'src/flask/views.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/views.py",
+          "description": "Transitive import chain: 'src/flask/views.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/views.py"
+    },
+    {
+      "id": "impact:src/flask/wrappers.py:imports",
+      "category": "impact",
+      "title": "src/flask/wrappers.py",
+      "description": "'src/flask/ctx.py' imports 'src/flask/wrappers.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/wrappers.py'.",
+      "affected_artifacts": [
+        "src/flask/wrappers.py"
+      ],
+      "relationship": "imports",
+      "potential_impact": "'src/flask/ctx.py' imports 'src/flask/wrappers.py'. A change to 'src/flask/ctx.py' may depend on behavior defined in 'src/flask/wrappers.py'.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/wrappers.py",
+          "description": "Static import edge: 'src/flask/ctx.py' imports 'src/flask/wrappers.py' (DIRECT_EVIDENCE: import statement parsed from repository source).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/wrappers.py"
+    },
+    {
+      "id": "impact:src/flask/wrappers.py:impacts",
+      "category": "impact",
+      "title": "src/flask/wrappers.py",
+      "description": "'src/flask/wrappers.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "affected_artifacts": [
+        "src/flask/wrappers.py"
+      ],
+      "relationship": "impacts",
+      "potential_impact": "'src/flask/wrappers.py' transitively depends on 'src/flask/ctx.py'. Whether the change propagates this far is not established.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "src/flask/wrappers.py",
+          "description": "Transitive import chain: 'src/flask/wrappers.py' reaches 'src/flask/ctx.py' through at most 2 static import hops (DIRECT_EVIDENCE: every hop is a parsed import statement).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:src/flask/wrappers.py"
+    },
+    {
+      "id": "impact:tests/test_appctx.py:tested_by",
+      "category": "impact",
+      "title": "tests/test_appctx.py",
+      "description": "Test 'tests/test_appctx.py' is structurally associated with 'src/flask/ctx.py' and should be re-run after the change.",
+      "affected_artifacts": [
+        "tests/test_appctx.py"
+      ],
+      "relationship": "tested_by",
+      "potential_impact": "Test 'tests/test_appctx.py' is structurally associated with 'src/flask/ctx.py' and should be re-run after the change.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "tests/test_appctx.py",
+          "description": "Repository graph test association: 'src/flask/ctx.py' is tested by 'tests/test_appctx.py' (DIRECT_EVIDENCE: derived from repository structure).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:tests/test_appctx.py"
+    },
+    {
+      "id": "impact:tests/test_reqctx.py:tested_by",
+      "category": "impact",
+      "title": "tests/test_reqctx.py",
+      "description": "Test 'tests/test_reqctx.py' is structurally associated with 'src/flask/ctx.py' and should be re-run after the change.",
+      "affected_artifacts": [
+        "tests/test_reqctx.py"
+      ],
+      "relationship": "tested_by",
+      "potential_impact": "Test 'tests/test_reqctx.py' is structurally associated with 'src/flask/ctx.py' and should be re-run after the change.",
+      "severity": null,
+      "evidence": [
+        {
+          "artifact": "tests/test_reqctx.py",
+          "description": "Repository graph test association: 'src/flask/ctx.py' is tested by 'tests/test_reqctx.py' (DIRECT_EVIDENCE: derived from repository structure).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": null,
+      "graph_node_id": "artifact:tests/test_reqctx.py"
     },
     {
       "id": "impact:src/flask/ctx.py:historically_changed_with",
@@ -1064,13 +2513,523 @@
       "is_inference": false,
       "recommendation": null,
       "graph_node_id": "history:tests/test_request.py"
+    },
+    {
+      "id": "risk:0:code",
+      "category": "risk",
+      "title": "HIGH code risk",
+      "description": "'src/flask/ctx.py' was identified as relevant to the requested change and is present in the repository's import graph. 21 file(s) depend on it through real import edges, so a behavioral change here is not locally contained. Any behavioral consequence requires review; no defect is established.",
+      "affected_artifacts": [
+        "src/flask/ctx.py"
+      ],
+      "relationship": null,
+      "potential_impact": null,
+      "severity": "high",
+      "evidence": [
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "Phase 2 identified 'src/flask/ctx.py' as relevant (reason: keyword_match; confidence: likely). Evidence: path keywords ['ctx'] match change keywords",
+          "evidence_type": "DERIVED_RELATIONSHIP",
+          "confidence": "likely"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "21 file(s) reach 'src/flask/ctx.py' through static import edges parsed from repository source: src/flask/__init__.py, src/flask/__main__.py, src/flask/app.py, src/flask/blueprints.py, src/flask/cli.py, and 16 more (DIRECT_EVIDENCE: repository import graph).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": true,
+      "recommendation": "Review the changed code path and its importing callers before merging.",
+      "graph_node_id": "risk:0:code"
+    },
+    {
+      "id": "risk:1:historical",
+      "category": "risk",
+      "title": "MEDIUM historical risk",
+      "description": "'src/flask/ctx.py' has 12 recorded commits and is explicitly changing. Repeated historical modification can indicate an area worth closer review; it does not establish a past defect.",
+      "affected_artifacts": [
+        "src/flask/ctx.py"
+      ],
+      "relationship": null,
+      "potential_impact": null,
+      "severity": "medium",
+      "evidence": [
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "Git commit 06ea505 modified 'src/flask/ctx.py': 'separate copy per call' (DIRECT_EVIDENCE: git log).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "Git commit a29f88c modified 'src/flask/ctx.py': 'document that headers must be set before streaming' (DIRECT_EVIDENCE: git log).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        },
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "Git commit fbb6f0b modified 'src/flask/ctx.py': 'all teardown callbacks are called despite errors' (DIRECT_EVIDENCE: git log).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "confirmed"
+        }
+      ],
+      "evidence_strength": "confirmed",
+      "is_inference": false,
+      "recommendation": "Review the cited commits for constraints and re-run behavior affected by the change.",
+      "graph_node_id": "risk:1:historical"
+    },
+    {
+      "id": "risk:2:regression",
+      "category": "risk",
+      "title": "MEDIUM regression risk",
+      "description": "'src/flask/ctx.py' is changing and tests/test_appctx.py, tests/test_reqctx.py is structurally associated with it. The association is derived from filenames, so regression exposure is inferred.",
+      "affected_artifacts": [
+        "src/flask/ctx.py",
+        "tests/test_appctx.py",
+        "tests/test_reqctx.py"
+      ],
+      "relationship": null,
+      "potential_impact": null,
+      "severity": "medium",
+      "evidence": [
+        {
+          "artifact": "src/flask/ctx.py",
+          "description": "Phase 2 identified 'src/flask/ctx.py' as relevant (reason: keyword_match; confidence: likely). Evidence: path keywords ['ctx'] match change keywords",
+          "evidence_type": "DERIVED_RELATIONSHIP",
+          "confidence": "likely"
+        },
+        {
+          "artifact": "tests/test_appctx.py",
+          "description": "Repository graph test association: 'src/flask/ctx.py' is tested by 'tests/test_appctx.py' (DIRECT_EVIDENCE: derived from repository structure).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        },
+        {
+          "artifact": "tests/test_reqctx.py",
+          "description": "Repository graph test association: 'src/flask/ctx.py' is tested by 'tests/test_reqctx.py' (DIRECT_EVIDENCE: derived from repository structure).",
+          "evidence_type": "DIRECT_EVIDENCE",
+          "confidence": "likely"
+        }
+      ],
+      "evidence_strength": "likely",
+      "is_inference": false,
+      "recommendation": "Run the associated tests and add coverage for changed behavior if needed.",
+      "graph_node_id": "risk:2:regression"
     }
   ],
-  "next_actions": [],
-  "evidence_gaps": [
+  "next_actions": [
     {
-      "description": "Risk analysis produced no risk findings for this change.",
-      "affected_artifact": null
+      "priority": 1,
+      "action": "Review the changed code path and its importing callers before merging.",
+      "source_finding_id": "risk:0:code",
+      "severity": "high",
+      "graph_node_id": "risk:0:code"
+    },
+    {
+      "priority": 2,
+      "action": "Review the cited commits for constraints and re-run behavior affected by the change.",
+      "source_finding_id": "risk:1:historical",
+      "severity": "medium",
+      "graph_node_id": "risk:1:historical"
+    },
+    {
+      "priority": 3,
+      "action": "Run the associated tests and add coverage for changed behavior if needed.",
+      "source_finding_id": "risk:2:regression",
+      "severity": "medium",
+      "graph_node_id": "risk:2:regression"
     }
-  ]
+  ],
+  "evidence_gaps": [],
+  "prioritization": {
+    "source": "watsonx",
+    "model_id": "ibm/granite-4-h-small",
+    "rankings": [
+      {
+        "finding_id": "risk:0:code",
+        "rank": 1,
+        "rationale": "High code risk due to wide import-proven blast radius of 21 files depending on ctx.py.",
+        "severity": "high",
+        "title": "HIGH code risk",
+        "source": "watsonx"
+      },
+      {
+        "finding_id": "risk:2:regression",
+        "rank": 2,
+        "rationale": "Medium regression risk as ctx.py change is structurally associated with related tests.",
+        "severity": "medium",
+        "title": "MEDIUM regression risk",
+        "source": "watsonx"
+      },
+      {
+        "finding_id": "risk:1:historical",
+        "rank": 3,
+        "rationale": "Medium historical risk because ctx.py has 12 recorded commits indicating repeated modification.",
+        "severity": "medium",
+        "title": "MEDIUM historical risk",
+        "source": "watsonx"
+      },
+      {
+        "finding_id": "impact:src/flask/__init__.py:impacts",
+        "rank": 4,
+        "rationale": "High impact as __init__.py directly imports ctx.py and is exposed to behavioral changes.",
+        "severity": null,
+        "title": "src/flask/__init__.py",
+        "source": "watsonx"
+      },
+      {
+        "finding_id": "impact:src/flask/app.py:impacts",
+        "rank": 5,
+        "rationale": "High impact as app.py directly imports ctx.py and is exposed to behavioral changes.",
+        "severity": null,
+        "title": "src/flask/app.py",
+        "source": "watsonx"
+      },
+      {
+        "finding_id": "impact:src/flask/globals.py:impacts",
+        "rank": 6,
+        "rationale": "High impact as globals.py directly imports ctx.py and is exposed to behavioral changes.",
+        "severity": null,
+        "title": "src/flask/globals.py",
+        "source": "watsonx"
+      },
+      {
+        "finding_id": "impact:src/flask/helpers.py:impacts",
+        "rank": 7,
+        "rationale": "Potential impact as helpers.py transitively depends on ctx.py.",
+        "severity": null,
+        "title": "src/flask/helpers.py",
+        "source": "watsonx"
+      },
+      {
+        "finding_id": "impact:src/flask/json/__init__.py:impacts",
+        "rank": 8,
+        "rationale": "Potential impact as json/__init__.py transitively depends on ctx.py.",
+        "severity": null,
+        "title": "src/flask/json/__init__.py",
+        "source": "watsonx"
+      },
+      {
+        "finding_id": "impact:src/flask/sessions.py:impacts",
+        "rank": 9,
+        "rationale": "Potential impact as sessions.py transitively depends on ctx.py.",
+        "severity": null,
+        "title": "src/flask/sessions.py",
+        "source": "watsonx"
+      },
+      {
+        "finding_id": "impact:src/flask/sessions.py:imports",
+        "rank": 10,
+        "rationale": "Potential impact as sessions.py imports ctx.py, affecting dependencies.",
+        "severity": null,
+        "title": "src/flask/sessions.py",
+        "source": "watsonx"
+      },
+      {
+        "finding_id": "impact:src/flask/ctx.py:historically_changed_with",
+        "rank": 11,
+        "rationale": "Ordered deterministically: unrated severity, 3 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "src/flask/ctx.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:tests/templates/context_template.html:historically_changed_with",
+        "rank": 12,
+        "rationale": "Ordered deterministically: unrated severity, 3 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "tests/templates/context_template.html",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:tests/test_request.py:historically_changed_with",
+        "rank": 13,
+        "rationale": "Ordered deterministically: unrated severity, 2 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "tests/test_request.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:src/flask/app.py:imports",
+        "rank": 14,
+        "rationale": "Ordered deterministically: unrated severity, 1 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "src/flask/app.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:src/flask/blueprints.py:impacts",
+        "rank": 15,
+        "rationale": "Ordered deterministically: unrated severity, 1 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "src/flask/blueprints.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:src/flask/cli.py:impacts",
+        "rank": 16,
+        "rationale": "Ordered deterministically: unrated severity, 1 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "src/flask/cli.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:src/flask/config.py:impacts",
+        "rank": 17,
+        "rationale": "Ordered deterministically: unrated severity, 1 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "src/flask/config.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:src/flask/debughelpers.py:impacts",
+        "rank": 18,
+        "rationale": "Ordered deterministically: unrated severity, 1 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "src/flask/debughelpers.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:src/flask/globals.py:imports",
+        "rank": 19,
+        "rationale": "Ordered deterministically: unrated severity, 1 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "src/flask/globals.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:src/flask/helpers.py:imports",
+        "rank": 20,
+        "rationale": "Ordered deterministically: unrated severity, 1 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "src/flask/helpers.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:src/flask/json/provider.py:impacts",
+        "rank": 21,
+        "rationale": "Ordered deterministically: unrated severity, 1 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "src/flask/json/provider.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:src/flask/logging.py:impacts",
+        "rank": 22,
+        "rationale": "Ordered deterministically: unrated severity, 1 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "src/flask/logging.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:src/flask/sansio/app.py:impacts",
+        "rank": 23,
+        "rationale": "Ordered deterministically: unrated severity, 1 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "src/flask/sansio/app.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:src/flask/sansio/blueprints.py:impacts",
+        "rank": 24,
+        "rationale": "Ordered deterministically: unrated severity, 1 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "src/flask/sansio/blueprints.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:src/flask/sansio/scaffold.py:impacts",
+        "rank": 25,
+        "rationale": "Ordered deterministically: unrated severity, 1 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "src/flask/sansio/scaffold.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:src/flask/signals.py:imports",
+        "rank": 26,
+        "rationale": "Ordered deterministically: unrated severity, 1 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "src/flask/signals.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:src/flask/templating.py:impacts",
+        "rank": 27,
+        "rationale": "Ordered deterministically: unrated severity, 1 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "src/flask/templating.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:src/flask/testing.py:impacts",
+        "rank": 28,
+        "rationale": "Ordered deterministically: unrated severity, 1 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "src/flask/testing.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:src/flask/typing.py:imports",
+        "rank": 29,
+        "rationale": "Ordered deterministically: unrated severity, 1 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "src/flask/typing.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:src/flask/views.py:impacts",
+        "rank": 30,
+        "rationale": "Ordered deterministically: unrated severity, 1 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "src/flask/views.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:src/flask/wrappers.py:impacts",
+        "rank": 31,
+        "rationale": "Ordered deterministically: unrated severity, 1 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "src/flask/wrappers.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:src/flask/wrappers.py:imports",
+        "rank": 32,
+        "rationale": "Ordered deterministically: unrated severity, 1 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "src/flask/wrappers.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:tests/test_appctx.py:tested_by",
+        "rank": 33,
+        "rationale": "Ordered deterministically: unrated severity, 1 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "tests/test_appctx.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:tests/test_reqctx.py:tested_by",
+        "rank": 34,
+        "rationale": "Ordered deterministically: unrated severity, 1 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "tests/test_reqctx.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:src/flask/ctx.py:impacts",
+        "rank": 35,
+        "rationale": "Ordered deterministically: unrated severity, 0 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "src/flask/ctx.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:tests/templates/context_template.html:tested_by",
+        "rank": 36,
+        "rationale": "Ordered deterministically: unrated severity, 0 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "tests/templates/context_template.html",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "impact:tests/test_request.py:tested_by",
+        "rank": 37,
+        "rationale": "Ordered deterministically: unrated severity, 0 direct-evidence item(s), category impact.",
+        "severity": null,
+        "title": "tests/test_request.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "history:src/flask/ctx.py",
+        "rank": 38,
+        "rationale": "Ordered deterministically: unrated severity, 12 direct-evidence item(s), category historical.",
+        "severity": null,
+        "title": "History: src/flask/ctx.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "history:tests/templates/context_template.html",
+        "rank": 39,
+        "rationale": "Ordered deterministically: unrated severity, 4 direct-evidence item(s), category historical.",
+        "severity": null,
+        "title": "History: tests/templates/context_template.html",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "history:tests/test_request.py",
+        "rank": 40,
+        "rationale": "Ordered deterministically: unrated severity, 2 direct-evidence item(s), category historical.",
+        "severity": null,
+        "title": "History: tests/test_request.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "context:src/flask/ctx.py",
+        "rank": 41,
+        "rationale": "Ordered deterministically: unrated severity, 0 direct-evidence item(s), category context.",
+        "severity": null,
+        "title": "src/flask/ctx.py",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "context:tests/templates/context_template.html",
+        "rank": 42,
+        "rationale": "Ordered deterministically: unrated severity, 0 direct-evidence item(s), category context.",
+        "severity": null,
+        "title": "tests/templates/context_template.html",
+        "source": "deterministic"
+      },
+      {
+        "finding_id": "context:tests/test_request.py",
+        "rank": 43,
+        "rationale": "Ordered deterministically: unrated severity, 0 direct-evidence item(s), category context.",
+        "severity": null,
+        "title": "tests/test_request.py",
+        "source": "deterministic"
+      }
+    ],
+    "discarded_finding_ids": [],
+    "appended_finding_ids": [
+      "impact:src/flask/ctx.py:historically_changed_with",
+      "impact:tests/templates/context_template.html:historically_changed_with",
+      "impact:tests/test_request.py:historically_changed_with",
+      "impact:src/flask/app.py:imports",
+      "impact:src/flask/blueprints.py:impacts",
+      "impact:src/flask/cli.py:impacts",
+      "impact:src/flask/config.py:impacts",
+      "impact:src/flask/debughelpers.py:impacts",
+      "impact:src/flask/globals.py:imports",
+      "impact:src/flask/helpers.py:imports",
+      "impact:src/flask/json/provider.py:impacts",
+      "impact:src/flask/logging.py:impacts",
+      "impact:src/flask/sansio/app.py:impacts",
+      "impact:src/flask/sansio/blueprints.py:impacts",
+      "impact:src/flask/sansio/scaffold.py:impacts",
+      "impact:src/flask/signals.py:imports",
+      "impact:src/flask/templating.py:impacts",
+      "impact:src/flask/testing.py:impacts",
+      "impact:src/flask/typing.py:imports",
+      "impact:src/flask/views.py:impacts",
+      "impact:src/flask/wrappers.py:impacts",
+      "impact:src/flask/wrappers.py:imports",
+      "impact:tests/test_appctx.py:tested_by",
+      "impact:tests/test_reqctx.py:tested_by",
+      "impact:src/flask/ctx.py:impacts",
+      "impact:tests/templates/context_template.html:tested_by",
+      "impact:tests/test_request.py:tested_by",
+      "history:src/flask/ctx.py",
+      "history:tests/templates/context_template.html",
+      "history:tests/test_request.py",
+      "context:src/flask/ctx.py",
+      "context:tests/templates/context_template.html",
+      "context:tests/test_request.py"
+    ],
+    "from_cache": true,
+    "error": null,
+    "generated_at": "2026-08-30T06:31:19Z"
+  }
 }

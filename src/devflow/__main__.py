@@ -6,6 +6,7 @@ from devflow.context import build_context
 from devflow.history import build_historical_context
 from devflow.impact import build_impact_analysis
 from devflow.input import accept_input
+from devflow.knowledge_graph import write_repository_graph_payload
 from devflow.map import build_change_impact_map, open_html_in_browser, write_frontend_graph_payload
 from devflow.models.change import ChangeRequestError
 from devflow.models.repository import RepositoryInputError
@@ -52,6 +53,16 @@ def _analyze_repository(repository_url: str, change_description: str):
     report = build_developer_report(context, impact, risk, history)
     write_frontend_graph_payload(graph)
     write_frontend_report_payload(report)
+
+    # The Repository Knowledge Graph is a separate, independent product
+    # (orientation view of "what exists" vs. the Change Impact Map's "what does
+    # this change affect"), but Phase 2 now builds it from the clone it already
+    # has, so we reuse that instead of cloning the repository a second time.
+    # It may be absent if the graph build failed; that degrades the Explore
+    # Repository view without affecting the Change Impact Map.
+    if context.repository_graph is not None:
+        write_repository_graph_payload(context.repository_graph)
+
     return graph, report
 
 
