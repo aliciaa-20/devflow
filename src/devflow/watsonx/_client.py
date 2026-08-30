@@ -65,7 +65,13 @@ class WatsonxConfig:
         endpoint: Optional[str] = None,
         model_id: Optional[str] = None,
         timeout: Optional[float] = None,
+        disabled: bool = False,
     ) -> None:
+        # An explicit switch, because passing empty credentials does NOT turn
+        # watsonx off: "" is falsy, so it falls through to the environment and
+        # the call proceeds anyway. Callers that mean "do not use watsonx"
+        # must be able to say so unambiguously.
+        self._forced_off = bool(disabled)
         # Credentials commonly live in a gitignored .env rather than a shell
         # profile. Loading here (never overriding a real environment variable)
         # means the same command works in an IDE terminal, a CI job, and a
@@ -92,7 +98,9 @@ class WatsonxConfig:
 
     @property
     def disabled(self) -> bool:
-        """Whether the operator explicitly turned watsonx off."""
+        """Whether watsonx has been turned off, by caller or by environment."""
+        if self._forced_off:
+            return True
         return os.environ.get("DEVFLOW_WATSONX_DISABLE", "").strip().lower() in (
             "1",
             "true",
@@ -105,6 +113,8 @@ class WatsonxConfig:
 
     def describe_gap(self) -> str:
         """Explain what is missing, without revealing any secret value."""
+        if self._forced_off:
+            return "watsonx was disabled for this run."
         if self.disabled:
             return "watsonx is disabled via DEVFLOW_WATSONX_DISABLE."
         missing = []

@@ -224,6 +224,125 @@ def emit(lines: Iterable[str]) -> None:
         print(line)
 
 
+# ---------------------------------------------------------------------------
+# Document structure
+# ---------------------------------------------------------------------------
+
+
+def title(text: str, subtitle: str = "") -> list[str]:
+    """A command's opening banner."""
+    lines = ["", paint(text, "bold")]
+    if subtitle:
+        lines.append(paint(f"  {subtitle}", "grey"))
+    lines.append(rule())
+    return lines
+
+
+def section(text: str, note: str = "") -> list[str]:
+    """A titled section break with breathing room above it."""
+    header = paint(text.upper(), "bold")
+    if note:
+        header += "  " + paint(note, "grey")
+    return ["", header, paint("-" * min(terminal_width(), 72), "grey")]
+
+
+def visible_length(text: str) -> int:
+    """Character width ignoring ANSI escape sequences."""
+    out, index = 0, 0
+    while index < len(text):
+        if text[index] == "\033":
+            end = text.find("m", index)
+            if end == -1:
+                break
+            index = end + 1
+            continue
+        out += 1
+        index += 1
+    return out
+
+
+def pad(text: str, width: int, align: str = "left") -> str:
+    """Pad to ``width`` counting only visible characters."""
+    gap = max(0, width - visible_length(text))
+    if align == "right":
+        return " " * gap + text
+    return text + " " * gap
+
+
+def table(
+    rows: Sequence[Sequence[str]],
+    *,
+    headers: Optional[Sequence[str]] = None,
+    aligns: Optional[Sequence[str]] = None,
+    indent: int = 2,
+    gap: int = 2,
+) -> list[str]:
+    """Render aligned columns.
+
+    Widths are measured on visible characters, so coloured cells line up.
+    Columns are never truncated: a finding id or a file path stays complete
+    even if it makes the row wide.
+    """
+    if not rows:
+        return []
+    columns = max(len(row) for row in rows)
+    if headers:
+        columns = max(columns, len(headers))
+    aligns = list(aligns or []) + ["left"] * (columns - len(aligns or []))
+
+    widths = [0] * columns
+    considered = list(rows) + ([list(headers)] if headers else [])
+    for row in considered:
+        for index, cell in enumerate(row):
+            widths[index] = max(widths[index], visible_length(str(cell)))
+
+    pad_left = " " * indent
+    separator = " " * gap
+    out: list[str] = []
+
+    if headers:
+        head = separator.join(
+            pad(paint(str(cell).upper(), "grey"), widths[i], aligns[i])
+            for i, cell in enumerate(headers)
+        )
+        out.append(pad_left + head.rstrip())
+
+    for row in rows:
+        cells = [
+            pad(str(cell), widths[i], aligns[i]) for i, cell in enumerate(row)
+        ]
+        out.append(pad_left + separator.join(cells).rstrip())
+    return out
+
+
+def steps(items: Sequence[str], *, start: int = 1) -> list[str]:
+    """A numbered next-step list."""
+    return [
+        f"  {paint(f'{start + index}.', 'grey')} {item}" for index, item in enumerate(items)
+    ]
+
+
+def command_hint(command: str, note: str = "") -> str:
+    """A runnable command the developer can copy."""
+    line = f"  {paint('$', 'grey')} {paint(command, 'cyan')}"
+    return f"{line}  {paint(note, 'grey')}" if note else line
+
+
+def note(text: str, tone: str = "grey") -> list[str]:
+    return wrap(text, indent=2) and [paint(line, tone) for line in wrap(text, indent=2)]
+
+
+def progress(step: int, total: int, label: str) -> str:
+    """A single pipeline step, printed as it completes."""
+    marker = paint("ok", "green")
+    counter = paint(f"[{step}/{total}]", "grey")
+    return f"  {counter} {marker}  {label}"
+
+
+def kv_block(pairs: Sequence[tuple[str, str]], label_width: int = 20) -> list[str]:
+    return [field(label, value, label_width) for label, value in pairs]
+
+
 def blank() -> str:
     return ""
 

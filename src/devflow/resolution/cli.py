@@ -37,6 +37,20 @@ import json
 import sys
 from pathlib import Path
 
+from devflow.render import (
+    check,
+    command_hint,
+    emit,
+    evidence_mark,
+    field,
+    paint,
+    section,
+    severity_badge,
+    status_badge,
+    steps,
+    title,
+    wrap,
+)
 from devflow.resolution._build import (
     create_resolution_request,
     decide_apply_gate,
@@ -48,22 +62,25 @@ from devflow.resolution._sessions import load_request, session_dir
 
 
 def _print_finding(finding: dict) -> None:
-    print(f"Finding: {finding.get('id')}")
-    print(f"  Title:       {finding.get('title')}")
-    print(f"  Category:    {finding.get('category')}")
-    print(f"  Severity:    {finding.get('severity')}")
-    print(f"  Description: {finding.get('description')}")
+    emit(title(f"finding {finding.get('id')}", str(finding.get("title") or "")))
+    print(field("category", str(finding.get("category") or "-")))
+    print(field("severity", severity_badge(finding.get("severity"))))
+    emit(wrap(str(finding.get("description") or ""), indent=2))
     if finding.get("is_inference"):
-        print("  WARNING: this finding is INFERENCE-level, not confirmed by direct evidence.")
+        print()
+        print(paint("  ? interpretation-level: not confirmed by direct evidence.", "yellow"))
     evidence = finding.get("evidence") or []
     if evidence:
-        print("  Evidence:")
+        emit(section("evidence"))
         for item in evidence:
-            print(f"    - [{item.get('evidence_type')}] {item.get('description')}")
+            mark, label = evidence_mark(item.get("evidence_type"))
+            print(f"  {mark}  {paint(label, 'grey')}")
+            emit(wrap(str(item.get("description") or ""), indent=6))
+    print()
 
 
 def _confirm(prompt: str) -> bool:
-    answer = input(f"{prompt} (yes/no): ").strip().lower()
+    answer = input(f"{paint(prompt, 'bold')} (yes/no): ").strip().lower()
     return answer in ("yes", "y")
 
 
@@ -79,24 +96,30 @@ def _cmd_request(args: argparse.Namespace) -> int:
         request, approved=approved, decided_by=getpass.getuser()
     )
 
-    print()
-    print(f"Resolution id: {request.id}")
-    print(f"Status: {request.status.value}")
+    emit(section("resolution"))
+    print(field("id", paint(request.id, "cyan")))
+    print(field("status", status_badge(request.status.value)))
     if not approved:
-        print("Investigation rejected. Stopping here.")
+        print()
+        print(paint("  Investigation rejected. Stopping here.", "yellow"))
         return 0
 
     prompt_path = session_dir(request.id) / "bob_prompt.md"
+    emit(section("next"))
+    emit(
+        steps(
+            [
+                "Open Bob IDE and switch to the `resolver` custom mode.",
+                "Paste in the investigation prompt below (path shown).",
+                "It investigates in parallel and proposes a fix without editing.",
+                'Save Bob\'s "Propose the Fix" output to a file.',
+            ]
+        )
+    )
     print()
-    print("DevFlow prepared Bob's investigation prompt from this finding's evidence:")
-    print(f"  {prompt_path}")
+    print(field("prompt", str(prompt_path)))
     print()
-    print("Next step:")
-    print("  1. Open Bob IDE and switch to the `resolver` custom mode.")
-    print("  2. Paste the prompt above. It asks Bob to investigate in parallel")
-    print("     using the four DevFlow skills, and to propose without editing.")
-    print('  3. Save Bob\'s "Propose the Fix" output to a file.')
-    print(f"  4. Run: devflow apply {request.id} <path-to-bob-output.md>")
+    print(command_hint(f"devflow apply {request.id} <path-to-bob-output.md>"))
     return 0
 
 
@@ -105,29 +128,38 @@ def _cmd_ingest_fix(args: argparse.Namespace) -> int:
     request = ingest_proposed_fix(request, args.bob_output_path)
 
     fix = request.proposed_fix
-    print("Proposed fix:")
-    print(f"  Summary:     {fix.summary}")
-    print(f"  Root cause:  {fix.root_cause}")
-    print(f"  Files:       {', '.join(fix.files_to_modify) or '(none listed)'}")
-    print(f"  Tests:       {', '.join(fix.tests_to_add_or_update) or '(none listed)'}")
-    print(f"  Validation:  {fix.validation_plan}")
+    emit(title("proposed fix", fix.summary))
+    print(field("root cause", fix.root_cause))
+    print(field("files", ", ".join(fix.files_to_modify) or paint("(none listed)", "grey")))
+    print(field("tests", ", ".join(fix.tests_to_add_or_update) or paint("(none listed)", "grey")))
+    emit(wrap(f"validation plan: {fix.validation_plan}", indent=2))
+    print()
 
     approved = _confirm("Apply this fix and run tests?")
     request = decide_apply_gate(request, approved=approved, decided_by=getpass.getuser())
 
-    print()
-    print(f"Status: {request.status.value}")
+    emit(section("resolution"))
+    print(field("status", status_badge(request.status.value)))
     if not approved:
-        print("Fix rejected. Stopping here.")
+        print()
+        print(paint("  Fix rejected. Stopping here.", "yellow"))
         return 0
 
+    emit(section("next"))
+    emit(
+        steps(
+            [
+                "Let Bob implement the fix in your local checkout.",
+                'Save Bob\'s closing "Resolution Summary ... Final Status" output to a file.',
+            ]
+        )
+    )
     print()
-    print("Next step:")
-    print("  1. Let Bob implement the fix in your local checkout.")
-    print('  2. Save Bob\'s closing "Resolution Summary ... Final Status" output to a file.')
     print(
-        f"  3. Run: python -m devflow.resolution validate {request.id} "
-        "--local-path <checkout> --result <bob-result.md> --test-command \"<command>\""
+        command_hint(
+            f'devflow validate {request.id} --local-path <checkout> '
+            '--result <bob-result.md> --test-command "<command>"'
+        )
     )
     return 0
 
@@ -142,20 +174,34 @@ def _cmd_validate(args: argparse.Namespace) -> int:
     )
 
     outcome = request.outcome
-    print(f"Resolution recorded as {outcome.final_status.value}.")
-    print(f"  Modified files:  {', '.join(outcome.modified_files) or '(none detected)'}")
+    emit(title("devflow validate", request.id))
+    print(field("result", status_badge(outcome.final_status.value)))
     print(
-        f"  Tests executed:  {outcome.tests_executed[0].command} "
-        f"(passed={outcome.tests_executed[0].passed}, exit_code={outcome.tests_executed[0].exit_code})"
+        field(
+            "files changed",
+            ", ".join(outcome.modified_files) or paint("(none detected)", "grey"),
+        )
+    )
+    test_run = outcome.tests_executed[0]
+    print(
+        field(
+            "tests executed",
+            f"{check(test_run.passed)}  {paint(test_run.command, 'cyan')} "
+            f"{paint(f'(exit {test_run.exit_code})', 'grey')}",
+        )
     )
     if outcome.remaining_risks:
-        print(f"  Remaining risks: {', '.join(outcome.remaining_risks)}")
+        print(field("remaining risks", ", ".join(outcome.remaining_risks)))
     print()
-    print(
-        "The Change Impact Map and Developer Report reflect the pre-fix analysis; "
-        "re-run `python -m devflow <url> <change>` to refresh them against the "
-        "current repository state."
+    emit(
+        wrap(
+            "The Change Impact Map and Developer Report reflect the pre-fix "
+            "analysis; re-run `devflow analyze <repo-url> \"<change>\"` to refresh "
+            "them against the current repository state.",
+            indent=2,
+        )
     )
+    print()
     return 0
 
 
@@ -195,5 +241,5 @@ def main(argv: list[str] | None = None) -> int:
     try:
         return args.func(args)
     except (ValueError, FileNotFoundError) as exc:
-        print(f"Error: {exc}", file=sys.stderr)
+        print(paint(f"Error: {exc}", "red"), file=sys.stderr)
         return 1

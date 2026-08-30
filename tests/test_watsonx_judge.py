@@ -107,6 +107,42 @@ def test_disable_flag_forces_deterministic_ranking(monkeypatch):
     assert "disabled" in (result.error or "")
 
 
+def test_config_disabled_true_forces_deterministic_even_with_real_credentials(monkeypatch):
+    """Regression for the --no-watsonx bug.
+
+    A caller that wants to force watsonx off cannot do so by passing empty
+    string credentials: WatsonxConfig falls back to the environment for any
+    falsy argument, so WatsonxConfig(api_key="", project_id="") with real
+    credentials in the environment stays fully configured and still ranks via
+    watsonx. WatsonxConfig(disabled=True) is the only construct that reliably
+    turns it off, regardless of what credentials are present.
+    """
+    monkeypatch.setenv("DEVFLOW_WATSONX_APIKEY", "real-key-from-env")
+    monkeypatch.setenv("DEVFLOW_WATSONX_PROJECT_ID", "real-project-from-env")
+
+    # The bug: this looks like it disables watsonx but does not.
+    broken_config = WatsonxConfig(api_key="", project_id="")
+    assert broken_config.configured is True
+    assert broken_config.disabled is False
+
+    # The fix: an explicit switch that cannot be defeated by real credentials.
+    fixed_config = WatsonxConfig(disabled=True)
+    assert fixed_config.configured is True
+    assert fixed_config.disabled is True
+    assert "disabled" in fixed_config.describe_gap()
+
+    def _fail_if_called(self, prompt, **kwargs):
+        raise AssertionError("watsonx must not be called when disabled=True")
+
+    monkeypatch.setattr(WatsonxClient, "generate", _fail_if_called)
+
+    result = prioritize_findings(
+        _report(_finding("a")), config=fixed_config, use_cache=False
+    )
+    assert result.source == PrioritizationSource.DETERMINISTIC
+    assert "disabled" in (result.error or "")
+
+
 def test_deterministic_order_prefers_severity_then_direct_evidence():
     findings = [
         _finding("low", severity="low"),
