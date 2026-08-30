@@ -226,6 +226,6 @@ def _next_action_for(session: dict[str, Any]) -> str:
         return f"Bob's proposal -> devflow apply {resolution_id} <file>"
     if status == "fix_proposed":
         return f"approval -> devflow apply {resolution_id} <file>"
-    if status == "apply_approved":
+    if status == "fix_approved":
         return f"validation -> devflow validate {resolution_id} ..."
     return "next step"

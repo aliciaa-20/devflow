@@ -15,6 +15,7 @@ import {
 import dagre from '@dagrejs/dagre';
 import { ArtifactNode, Inspector } from './App';
 import Dropdown from './ui/Dropdown';
+import NodeIcon from './ui/NodeIcon';
 
 // A wide, star-shaped graph (one change node, many impacted files) fits only
 // by zooming until every label is unreadable. Cap the zoom so the initial
@@ -528,8 +529,6 @@ export default function RepoGraphView({ graph, active = true }: { graph: RepoGra
     return (
       <div className="app-shell">
         <aside className="sidebar">
-          <div className="brand"><span className="brand-mark" /> DEVFLOW</div>
-          <div className="view-kicker view-kicker-repo">Repository Knowledge Graph</div>
           <div className="panel-block">
             <div className="panel-title">STATUS</div>
             <div className="summary-change">NO REPOSITORY GRAPH LOADED</div>
@@ -557,24 +556,32 @@ export default function RepoGraphView({ graph, active = true }: { graph: RepoGra
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="brand"><span className="brand-mark" /> DEVFLOW</div>
-        <div className="view-kicker view-kicker-repo">Repository Knowledge Graph</div>
-        <div className="panel-block">
-          <div className="panel-title">REPOSITORY</div>
-          <div className="repo-link">
-            {graph.repository_url ? (
-              <a href={graph.repository_url} target="_blank" rel="noopener noreferrer">
-                {graph.owner || 'Repository'}/{graph.name || 'project'}
-              </a>
-            ) : (
-              <span>{graph.owner || 'Repository'}/{graph.name || 'project'}</span>
-            )}
-          </div>
+        <div className="context-card">
+          {graph.repository_url ? (
+            <a className="context-repo" href={graph.repository_url} target="_blank" rel="noopener noreferrer">
+              <NodeIcon type="repository" />
+              {graph.owner || 'Repository'}/{graph.name || 'project'}
+            </a>
+          ) : (
+            <div className="context-repo context-repo-plain">
+              <NodeIcon type="repository" />
+              {graph.owner || 'Repository'}/{graph.name || 'project'}
+            </div>
+          )}
         </div>
-        <div className="panel-block compact-metrics">
-          <div><span>FILES</span><strong>{graph.nodes.length}</strong></div>
-          <div><span>LINKS</span><strong>{graph.edges.length}</strong></div>
-          <div><span>HIDDEN</span><strong>{hiddenCount}</strong></div>
+        <div className="stat-hero">
+          <div className="stat-card">
+            <span className="stat-label">Files</span>
+            <strong className="stat-value">{graph.nodes.length}</strong>
+          </div>
+          <div className="stat-card">
+            <span className="stat-label">Links</span>
+            <strong className="stat-value">{graph.edges.length}</strong>
+          </div>
+          <div className="stat-card">
+            <span className="stat-label">Hidden</span>
+            <strong className="stat-value">{hiddenCount}</strong>
+          </div>
         </div>
         <div className="panel-block">
           <div className="panel-title">ABOUT</div>

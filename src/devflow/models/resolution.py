@@ -122,12 +122,24 @@ class ProposedFix:
 
 @dataclass(frozen=True)
 class TestExecutionRecord:
-    """Only ever built from an actually-executed subprocess -- never claimed."""
+    """Only ever built from an actually-executed subprocess -- never claimed.
+
+    stdout and stderr are kept separate so a caller can inspect each stream
+    individually (e.g. many test runners write counts to stdout and tracebacks
+    to stderr). output_excerpt is the last 4000 characters of combined output,
+    preserved for backward compatibility with persisted state.json files.
+    test_count and failure_count are parsed from the combined output when the
+    runner uses pytest/unittest summary lines; -1 means not parseable.
+    """
 
     command: str
     passed: bool
     exit_code: int
     output_excerpt: str
+    stdout: str = ""
+    stderr: str = ""
+    test_count: int = -1
+    failure_count: int = -1
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -135,6 +147,10 @@ class TestExecutionRecord:
             "passed": self.passed,
             "exit_code": self.exit_code,
             "output_excerpt": self.output_excerpt,
+            "stdout": self.stdout,
+            "stderr": self.stderr,
+            "test_count": self.test_count,
+            "failure_count": self.failure_count,
         }
 
     @classmethod
@@ -144,6 +160,10 @@ class TestExecutionRecord:
             passed=bool(payload["passed"]),
             exit_code=int(payload["exit_code"]),
             output_excerpt=str(payload["output_excerpt"]),
+            stdout=str(payload.get("stdout") or ""),
+            stderr=str(payload.get("stderr") or ""),
+            test_count=int(payload.get("test_count", -1)),
+            failure_count=int(payload.get("failure_count", -1)),
         )
 
 

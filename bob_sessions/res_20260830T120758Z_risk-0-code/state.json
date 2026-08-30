@@ -1,0 +1,52 @@
+{
+  "id": "res_20260830T120758Z_risk-0-code",
+  "repository_url": "https://github.com/pallets/flask",
+  "owner": "pallets",
+  "name": "flask",
+  "change_summary": "Refactor request context handling.",
+  "finding_id": "risk:0:code",
+  "finding_snapshot": {
+    "id": "risk:0:code",
+    "category": "risk",
+    "title": "HIGH code risk",
+    "description": "'src/flask/ctx.py' was identified as relevant to the requested change and is present in the repository's import graph. 21 file(s) depend on it through real import edges, so a behavioral change here is not locally contained. Any behavioral consequence requires review; no defect is established.",
+    "affected_artifacts": [
+      "src/flask/ctx.py"
+    ],
+    "relationship": null,
+    "potential_impact": null,
+    "severity": "high",
+    "evidence": [
+      {
+        "artifact": "src/flask/ctx.py",
+        "description": "Phase 2 identified 'src/flask/ctx.py' as relevant (reason: keyword_match; confidence: likely). Evidence: path keywords ['ctx'] match change keywords",
+        "evidence_type": "DERIVED_RELATIONSHIP",
+        "confidence": "likely"
+      },
+      {
+        "artifact": "src/flask/ctx.py",
+        "description": "21 file(s) reach 'src/flask/ctx.py' through static import edges parsed from repository source: src/flask/__init__.py, src/flask/__main__.py, src/flask/app.py, src/flask/blueprints.py, src/flask/cli.py, and 16 more (DIRECT_EVIDENCE: repository import graph).",
+        "evidence_type": "DIRECT_EVIDENCE",
+        "confidence": "likely"
+      }
+    ],
+    "evidence_strength": "likely",
+    "is_inference": true,
+    "recommendation": "Review the changed code path and its importing callers before merging.",
+    "graph_node_id": "risk:0:code"
+  },
+  "graph_node_id": "risk:0:code",
+  "status": "investigation_approved",
+  "created_at": "2026-08-30T12:07:58Z",
+  "investigate_gate": {
+    "gate": "investigate",
+    "decision": "approved",
+    "decided_by": "aliciapereira",
+    "decided_at": "2026-08-30T12:08:09Z",
+    "note": null
+  },
+  "proposed_fix": null,
+  "apply_gate": null,
+  "outcome": null,
+  "error": null
+}

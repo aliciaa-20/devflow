@@ -12,15 +12,25 @@ build/
 .ruff_cache/
 *.egg
 MANIFEST
+.venv/
+venv/
+env/
+ENV/
 .env
 .env.*
 !.env.example
 *.log
 .DS_Store
+.vscode/
+.idea/
+node_modules/
 frontend/node_modules/
-dist/
 CLAUDE.md
 WINNING_STRATEGY.md
+SPRINT_FINAL.md
+SUBMISSION_DOCS.md
+UI_REDESIGN.md
+PDF.md
 
 # Local tool artifacts, not part of the submission.
 .playwright-cli/

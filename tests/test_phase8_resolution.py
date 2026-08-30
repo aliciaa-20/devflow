@@ -367,3 +367,270 @@ def test_resolution_request_to_dict_round_trips_through_json(tmp_path):
     round_tripped = json.loads(json.dumps(request.to_dict()))
     rebuilt = ResolutionRequest.from_dict(round_tripped)
     assert rebuilt == request
+
+
+# ---------------------------------------------------------------------------
+# Phase 8 focused tests added for the finding-resolution vertical slice
+# ---------------------------------------------------------------------------
+
+WELL_FORMED_RESOLUTION_NOT_RESOLVED = """\
+## Resolution Summary
+
+Unable to confirm the root cause from the available evidence.
+
+## Files Changed
+
+(none)
+
+## Tests Added / Updated
+
+(none)
+
+## Tests Executed
+
+(none)
+
+## Validation
+
+No changes were applied.
+
+## Remaining Risks
+
+- The original finding is still open.
+
+## Final Status
+
+NOT RESOLVED
+"""
+
+
+# 1. Finding → resolution request
+def test_resolution_request_created_from_finding_id(tmp_path):
+    """Finding → ResolutionRequest captures the correct finding and repo context."""
+    request = _make_request(tmp_path)
+    # repository context preserved
+    assert request.repository_url == SAMPLE_REPORT["repository_url"]
+    assert request.owner == SAMPLE_REPORT["owner"]
+    assert request.name == SAMPLE_REPORT["name"]
+    assert request.change_summary == SAMPLE_REPORT["change_summary"]
+    # finding identity preserved
+    assert request.finding_id == "finding-1"
+    assert request.status == ResolutionStatus.REQUESTED
+    # resolution id is non-empty
+    assert request.id.startswith("res_")
+
+
+# 2. Resolution request preserves evidence
+def test_resolution_request_preserves_evidence_fields(tmp_path):
+    """ResolutionRequest.finding_snapshot contains all evidence from the report finding."""
+    request = _make_request(tmp_path)
+    snap = request.finding_snapshot
+
+    assert snap["title"] == SAMPLE_FINDING["title"]
+    assert snap["severity"] == SAMPLE_FINDING["severity"]
+    assert snap["recommendation"] == SAMPLE_FINDING["recommendation"]
+    assert snap["affected_artifacts"] == SAMPLE_FINDING["affected_artifacts"]
+    assert snap["is_inference"] == SAMPLE_FINDING["is_inference"]
+    assert snap["graph_node_id"] == SAMPLE_FINDING["graph_node_id"]
+
+    # Evidence items preserved verbatim
+    assert len(snap["evidence"]) == len(SAMPLE_FINDING["evidence"])
+    first_evidence = snap["evidence"][0]
+    assert first_evidence["artifact"] == "src/auth.py"
+    assert first_evidence["evidence_type"] == "DIRECT_EVIDENCE"
+    assert first_evidence["confidence"] == "confirmed"
+
+
+# 3. Approval is required before mutation
+def test_no_mutation_without_investigation_approval(tmp_path):
+    """Files cannot be ingested and no proposed fix can be created without gate 1 approval."""
+    bob_sessions_dir = tmp_path / "bob_sessions"
+    request = _make_request(tmp_path)
+
+    # Status REQUESTED -- ingest must be blocked
+    bob_output = tmp_path / "bob-output.md"
+    bob_output.write_text(WELL_FORMED_PROPOSED_FIX, encoding="utf-8")
+    with pytest.raises(ValueError, match="investigation gate"):
+        ingest_proposed_fix(request, bob_output, bob_sessions_dir=bob_sessions_dir)
+
+    # Gate 1 rejected -- ingest must remain blocked
+    request = decide_investigation_gate(
+        request, approved=False, decided_by="dev", bob_sessions_dir=bob_sessions_dir
+    )
+    assert request.status == ResolutionStatus.REJECTED_BEFORE_INVESTIGATION
+    with pytest.raises(ValueError):
+        ingest_proposed_fix(request, bob_output, bob_sessions_dir=bob_sessions_dir)
+
+
+def test_no_validation_without_apply_approval(tmp_path):
+    """Validation cannot run without gate 2 (apply-fix) approval."""
+    bob_sessions_dir = tmp_path / "bob_sessions"
+    request = _make_request(tmp_path)
+
+    # Walk to FIX_PROPOSED without approving the apply gate
+    request = decide_investigation_gate(
+        request, approved=True, decided_by="dev", bob_sessions_dir=bob_sessions_dir
+    )
+    bob_output = tmp_path / "bob-output.md"
+    bob_output.write_text(WELL_FORMED_PROPOSED_FIX, encoding="utf-8")
+    request = ingest_proposed_fix(request, bob_output, bob_sessions_dir=bob_sessions_dir)
+    assert request.status == ResolutionStatus.FIX_PROPOSED
+
+    result_file = tmp_path / "bob-result.md"
+    result_file.write_text(WELL_FORMED_RESOLUTION_RESOLVED, encoding="utf-8")
+    with pytest.raises(ValueError, match="apply-fix gate"):
+        run_validation(
+            request,
+            local_path=tmp_path,
+            raw_result_output_path=result_file,
+            test_command="true",
+            bob_sessions_dir=bob_sessions_dir,
+        )
+
+
+# 4. Validation captures actual results (stdout, stderr, exit code)
+def test_validation_captures_real_stdout_stderr_exit_code(tmp_path):
+    """TestExecutionRecord must contain real stdout, stderr, and exit_code from subprocess."""
+    bob_sessions_dir = tmp_path / "bob_sessions"
+    repo_dir = tmp_path / "checkout"
+    repo_dir.mkdir()
+    _init_git_repo(repo_dir)
+
+    request = _run_to_fix_approved(tmp_path, bob_sessions_dir)
+    result_file = tmp_path / "bob-result.md"
+    result_file.write_text(WELL_FORMED_RESOLUTION_RESOLVED, encoding="utf-8")
+
+    # Use a command that writes to stdout and exits 0
+    request = run_validation(
+        request,
+        local_path=repo_dir,
+        raw_result_output_path=result_file,
+        test_command="echo 'stdout-sentinel'",
+        bob_sessions_dir=bob_sessions_dir,
+    )
+
+    record = request.outcome.tests_executed[0]
+    assert record.exit_code == 0
+    assert record.passed is True
+    assert "stdout-sentinel" in record.stdout
+    # stderr is captured separately (may be empty for echo)
+    assert isinstance(record.stderr, str)
+    # output_excerpt contains the combined output
+    assert "stdout-sentinel" in record.output_excerpt
+
+
+def test_validation_captures_nonzero_exit_code_and_stderr(tmp_path):
+    """A failing command's non-zero exit code is captured along with stderr."""
+    bob_sessions_dir = tmp_path / "bob_sessions"
+    repo_dir = tmp_path / "checkout"
+    repo_dir.mkdir()
+    _init_git_repo(repo_dir)
+
+    request = _run_to_fix_approved(tmp_path, bob_sessions_dir)
+    result_file = tmp_path / "bob-result.md"
+    result_file.write_text(WELL_FORMED_RESOLUTION_RESOLVED, encoding="utf-8")
+
+    # Command that writes to stderr and exits non-zero
+    request = run_validation(
+        request,
+        local_path=repo_dir,
+        raw_result_output_path=result_file,
+        test_command="echo 'err-sentinel' >&2; exit 1",
+        bob_sessions_dir=bob_sessions_dir,
+    )
+
+    record = request.outcome.tests_executed[0]
+    assert record.exit_code == 1
+    assert record.passed is False
+    assert "err-sentinel" in record.stderr
+
+
+# 5. Failed validation leaves the finding unresolved
+def test_failed_validation_leaves_finding_not_resolved(tmp_path):
+    """When Bob claims RESOLVED but tests fail, final_status must not be RESOLVED."""
+    bob_sessions_dir = tmp_path / "bob_sessions"
+    repo_dir = tmp_path / "checkout"
+    repo_dir.mkdir()
+    _init_git_repo(repo_dir)
+
+    request = _run_to_fix_approved(tmp_path, bob_sessions_dir)
+    result_file = tmp_path / "bob-result.md"
+    # Bob's output claims RESOLVED
+    result_file.write_text(WELL_FORMED_RESOLUTION_RESOLVED, encoding="utf-8")
+
+    request = run_validation(
+        request,
+        local_path=repo_dir,
+        raw_result_output_path=result_file,
+        test_command="false",  # real failing command
+        bob_sessions_dir=bob_sessions_dir,
+    )
+
+    assert request.status == ResolutionStatus.VALIDATED
+    assert request.outcome.final_status == FinalStatus.VALIDATION_FAILED, (
+        "Bob's RESOLVED claim must be overridden by a real failing test execution"
+    )
+    assert request.outcome.bob_claimed_status == FinalStatus.RESOLVED, (
+        "Bob's claimed status must be preserved for auditability"
+    )
+    assert request.outcome.contradicted_bob is True
+
+
+def test_not_resolved_outcome_leaves_finding_open(tmp_path):
+    """A NOT RESOLVED resolution result keeps the finding in the open set in devflow status."""
+    import json as json_mod
+
+    bob_sessions_dir = tmp_path / "bob_sessions"
+    repo_dir = tmp_path / "checkout"
+    repo_dir.mkdir()
+    _init_git_repo(repo_dir)
+
+    request = _run_to_fix_approved(tmp_path, bob_sessions_dir)
+    result_file = tmp_path / "bob-result.md"
+    result_file.write_text(WELL_FORMED_RESOLUTION_NOT_RESOLVED, encoding="utf-8")
+
+    request = run_validation(
+        request,
+        local_path=repo_dir,
+        raw_result_output_path=result_file,
+        test_command="true",  # tests pass, but Bob says not resolved
+        bob_sessions_dir=bob_sessions_dir,
+    )
+
+    # Final status must reflect Bob's NOT_RESOLVED claim (tests pass but Bob said not resolved)
+    assert request.outcome.final_status == FinalStatus.NOT_RESOLVED
+
+    # Load from disk and confirm the finding_id is NOT in the resolved set
+    from devflow.status import build_status, load_sessions
+
+    sessions = load_sessions(bob_sessions_dir)
+    resolved_finding_ids = {
+        str(session.get("finding_id"))
+        for session in sessions
+        if str((session.get("outcome") or {}).get("final_status") or "").lower()
+        in ("resolved", "validated")
+    }
+    assert request.finding_id not in resolved_finding_ids, (
+        "A NOT_RESOLVED finding must not appear in the resolved set"
+    )
+
+
+# 6. Validation captures test counts from pytest-style output
+def test_parse_test_counts_from_pytest_style_output():
+    """_parse_test_counts must extract passed and failed numbers from pytest summary lines."""
+    from devflow.resolution._build import _parse_test_counts
+
+    # 3 passed
+    count, failures = _parse_test_counts("====== 3 passed in 0.12s ======")
+    assert count == 3
+    assert failures == 0
+
+    # 2 passed, 1 failed
+    count, failures = _parse_test_counts("====== 2 passed, 1 failed in 0.45s ======")
+    assert count == 3
+    assert failures == 1
+
+    # Unrecognised output → -1
+    count, failures = _parse_test_counts("make: *** [test] Error 1")
+    assert count == -1
+    assert failures == -1

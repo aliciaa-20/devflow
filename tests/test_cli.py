@@ -105,7 +105,7 @@ def _report_file(tmp_path, *, with_prioritization=False):
 
 
 def test_cli_exposes_the_expected_command_surface():
-    """The five journey verbs, plus the two read-only inspection commands."""
+    """The five journey verbs, plus the two read-only inspection commands, plus resolve-auto."""
     parser = build_parser()
     subparsers = [
         action for action in parser._actions if hasattr(action, "choices") and action.choices
@@ -117,6 +117,7 @@ def test_cli_exposes_the_expected_command_surface():
         "explain",
         "status",
         "resolve",
+        "resolve-auto",
         "apply",
         "validate",
     }

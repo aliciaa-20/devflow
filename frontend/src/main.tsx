@@ -70,6 +70,38 @@ function ViewTabs({ view, onChange }: { view: View; onChange: (view: View) => vo
   );
 }
 
+function TopBar({
+  view,
+  onChange,
+  graph,
+  repoGraph,
+}: {
+  view: View;
+  onChange: (view: View) => void;
+  graph: GraphData | null;
+  repoGraph: RepoGraphData | null;
+}) {
+  const owner = graph?.owner ?? repoGraph?.owner;
+  const name = graph?.name ?? repoGraph?.name;
+  const repoLabel = owner || name ? `${owner || 'repository'}/${name || 'project'}` : null;
+
+  return (
+    <header className="top-bar">
+      <div className="brand"><span className="brand-mark" /> DEVFLOW</div>
+      <div className="top-bar-context">
+        {repoLabel ? <span className="top-bar-repo">{repoLabel}</span> : null}
+        {graph?.change_summary ? (
+          <>
+            {repoLabel ? <span className="top-bar-sep">&middot;</span> : null}
+            <span className="top-bar-change" title={graph.change_summary}>{graph.change_summary}</span>
+          </>
+        ) : null}
+      </div>
+      <ViewTabs view={view} onChange={onChange} />
+    </header>
+  );
+}
+
 function Boot() {
   const [graph, setGraph] = useState<GraphData | null>(null);
   const [report, setReport] = useState<ReportData | null>(null);
@@ -124,7 +156,7 @@ function Boot() {
 
   return (
     <div className="devflow-root">
-      <ViewTabs view={view} onChange={setView} />
+      <TopBar view={view} onChange={setView} graph={graph} repoGraph={repoGraph} />
       {/* Both views stay mounted (hidden via CSS, not unmounted) so each
           keeps its own search/filter/selection/drag state across tab
           switches within this session. */}

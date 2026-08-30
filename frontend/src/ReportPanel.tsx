@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ResolvePathway } from './insights';
 
 export type ReportEvidence = {
   artifact: string;
@@ -253,6 +254,9 @@ function RiskCard({
         ) : null}
         {finding.is_inference ? <span className="report-inference">Inference-based assessment</span> : null}
       </button>
+      <div className="report-risk-resolve">
+        <ResolvePathway findingId={finding.id} />
+      </div>
       <button
         type="button"
         className="report-expand"
@@ -278,7 +282,6 @@ export default function ReportPanel({ report, onSelectGraphNode }: ReportPanelPr
   const contextFindings = (report.sections?.context?.findings ?? allFindings).filter((f) => f.category === 'context');
   const nextActions = report.next_actions ?? [];
   const evidenceGaps = report.evidence_gaps ?? [];
-  const highestRisk = report.sections?.risk?.highest_severity;
 
   const historyByArtifact = useMemo(() => {
     const map = new Map<string, ReportFinding>();
@@ -303,21 +306,12 @@ export default function ReportPanel({ report, onSelectGraphNode }: ReportPanelPr
 
       {report.error ? <div className="report-error">{report.error}</div> : null}
 
-      <section className="report-summary-block">
-        <div className="report-summary-label">Summary</div>
-        <p className="report-summary-text">{report.change_summary || 'No change summary available.'}</p>
-        {report.changed_files?.length ? (
-          <p className="report-summary-meta">
-            <span>Changed files</span>
-            <span>{report.changed_files.join(', ')}</span>
-          </p>
-        ) : null}
-        <div className="report-summary-stats">
-          <span>{impactFindings.length} impact</span>
-          <span>{riskFindings.length} risks</span>
-          {highestRisk ? <span>Highest {highestRisk.toUpperCase()}</span> : null}
-        </div>
-      </section>
+      {report.changed_files?.length ? (
+        <p className="report-summary-meta report-summary-meta-standalone">
+          <span>Changed files</span>
+          <span>{report.changed_files.join(', ')}</span>
+        </p>
+      ) : null}
 
       {impactFindings.length ? (
         <section className="report-section">

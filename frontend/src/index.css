@@ -155,8 +155,35 @@ button.active {
   background: rgba(14, 22, 37, 0.97);
   border-right: 1px solid rgba(148, 163, 184, 0.16);
   padding: 20px 16px;
-  overflow: auto;
   box-shadow: inset -12px 0 24px -24px rgba(0, 0, 0, 0.6);
+}
+
+.inspector {
+  overflow: auto;
+}
+
+/* The sidebar itself never scrolls as one block -- only its report region
+   does, once the fixed context/stats/actions above it are accounted for. */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0 -16px;
+  padding: 0 16px;
+}
+
+.sidebar-scroll .report-panel > .panel-title {
+  position: sticky;
+  top: 0;
+  background: rgba(14, 22, 37, 0.97);
+  padding-bottom: 6px;
+  z-index: 1;
 }
 
 .inspector {
@@ -204,46 +231,13 @@ button.active {
   line-height: 1.5;
 }
 
-.compact-metrics {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-
-.compact-metrics div {
+.sidebar-actions {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: 8px;
-  background: rgba(24, 36, 54, 0.55);
-}
-
-.compact-metrics span {
-  color: #9eb7d6;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.compact-metrics strong {
-  font-size: 13px;
-}
-
-.compact-metrics div.metric-risk {
-  border-color: rgba(239, 68, 68, 0.4);
-  background: rgba(239, 68, 68, 0.1);
-}
-
-.compact-metrics div.metric-risk strong {
-  color: #fca5a5;
-}
-
-.toolbar-stack {
-  display: flex;
-  flex-direction: column;
   gap: 8px;
+}
+
+.sidebar-actions button {
+  flex: 1;
 }
 
 .graph-panel {
@@ -395,6 +389,19 @@ button.active {
   font-weight: 700;
 }
 
+.dropdown-group-title {
+  padding: 8px 9px 4px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #6f829d;
+}
+
+.dropdown-group-title:first-child {
+  padding-top: 2px;
+}
+
 .dropdown-checkbox {
   display: flex;
   align-items: center;
@@ -525,7 +532,6 @@ button.active {
 .risk-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 6px;
   font-size: 9.5px;
   letter-spacing: 0.1em;
@@ -535,7 +541,14 @@ button.active {
   font-weight: 700;
 }
 
+.node-header .node-icon,
+.risk-header .node-icon {
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
 .node-collapse-toggle {
+  margin-left: auto;
   flex-shrink: 0;
   min-width: 18px;
   height: 16px;
@@ -788,10 +801,19 @@ button.active {
   border: none !important;
 }
 
+/* Every node exposes a source+target handle on all four sides so edges can
+   connect from whichever side actually faces the other node (see the edge
+   builder in getGraphLayout) -- but nodesConnectable is false and nothing
+   should ever look like 8 little dots per node, so they stay invisible. */
 .react-flow__handle {
-  width: 8px;
-  height: 8px;
-  background: rgba(148, 163, 184, 0.9);
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: none;
 }
 
 .react-flow__controls {
@@ -800,10 +822,12 @@ button.active {
 }
 
 .react-flow__minimap {
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  border-radius: 10px;
+  width: 168px !important;
+  height: 116px !important;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-md);
   overflow: hidden;
-  box-shadow: 0 12px 28px rgba(2, 6, 23, 0.5);
+  box-shadow: var(--el-3);
   margin: 16px !important;
 }
 
@@ -1130,6 +1154,10 @@ button.active {
   color: #b7c9e4;
 }
 
+.report-summary-meta-standalone {
+  margin: 4px 0 12px;
+}
+
 .report-summary-meta span:first-child {
   color: #9eb7d6;
   font-size: 10px;
@@ -1441,6 +1469,13 @@ button.active {
   --accent-soft: rgba(91, 157, 255, 0.14);
   --accent-line: rgba(91, 157, 255, 0.55);
 
+  /* IBM Carbon blue, reserved for the two places that should read as "the
+     one thing IBM blue" -- the change node (the map's anchor) and the
+     active view tab -- rather than diluted across every accent use. */
+  --carbon-blue: #0f62fe;
+  --carbon-blue-soft: rgba(15, 98, 254, 0.16);
+  --carbon-blue-glow: rgba(15, 98, 254, 0.45);
+
   /* semantic, used only for meaning */
   --sev-critical: #ff6b6b;
   --sev-high: #ff9f45;
@@ -1496,13 +1531,13 @@ button.active {
 /* --- graph nodes: flat surfaces, meaning on the left edge --------------- */
 
 .flow-node {
-  min-width: 172px;
+  min-width: 144px;
   border: 1px solid var(--line-2);
   border-left: 3px solid var(--line-3);
   border-radius: var(--r-md);
   background: var(--s-2);
   box-shadow: var(--el-1);
-  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
+  padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-3);
   transition:
     border-color 160ms var(--ease),
     box-shadow 160ms var(--ease),
@@ -1522,12 +1557,27 @@ button.active {
   background: var(--s-2);
 }
 
-.flow-node.change { border-left-color: #a78bfa; }
+/* The change node is the map's anchor: a touch larger (see changeNodeHeight
+   in App.tsx), Carbon blue, with a soft glow so it reads as "this is the
+   change" at a glance rather than just another box in the ring. */
+.flow-node.change {
+  border: 1.5px solid var(--carbon-blue);
+  border-left-width: 4px;
+  background: var(--s-3);
+  box-shadow: 0 0 0 1px var(--carbon-blue-soft), 0 0 28px var(--carbon-blue-glow), var(--el-2);
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.flow-node.change .node-header { color: #bcd4ff; }
+
 .flow-node.artifact { border-left-color: var(--line-3); }
-.flow-node.risk { border-left-color: var(--sev-medium); }
-.flow-node.risk.severity-critical { border-left-color: var(--sev-critical); }
-.flow-node.risk.severity-high { border-left-color: var(--sev-high); }
-.flow-node.risk.severity-medium { border-left-color: var(--sev-medium); }
+
+/* Risk nodes carry their own glow -- strong enough to catch the eye across
+   the map without reading as an error popup. */
+.flow-node.risk { border-left-color: var(--sev-medium); box-shadow: var(--el-1), 0 0 18px rgba(242, 199, 68, 0.18); }
+.flow-node.risk.severity-critical { border-left-color: var(--sev-critical); box-shadow: var(--el-2), 0 0 26px rgba(255, 107, 107, 0.38); }
+.flow-node.risk.severity-high { border-left-color: var(--sev-high); box-shadow: var(--el-2), 0 0 22px rgba(255, 159, 69, 0.3); }
+.flow-node.risk.severity-medium { border-left-color: var(--sev-medium); box-shadow: var(--el-1), 0 0 18px rgba(242, 199, 68, 0.22); }
 .flow-node.risk.severity-low { border-left-color: var(--sev-low); }
 
 .node-structural .flow-node {
@@ -1619,8 +1669,16 @@ select:focus-visible {
 .view-tabs { border-bottom: 1px solid var(--line-1); gap: var(--sp-1); }
 .view-tabs button { border: 0; background: transparent; color: var(--ink-3); border-radius: 0; }
 .view-tabs button:hover:not(.active) { color: var(--ink-2); background: transparent; }
-.view-tabs button.active { color: var(--ink-1); background: transparent; }
-.view-tabs button.active::after { background: var(--accent); height: 2px; }
+.view-tabs button.active {
+  color: #ffffff;
+  background: transparent;
+  text-shadow: 0 0 18px var(--carbon-blue-glow);
+}
+.view-tabs button.active::after {
+  background: var(--carbon-blue);
+  height: 2px;
+  box-shadow: 0 0 8px var(--carbon-blue-glow);
+}
 
 /* --- evidence vocabulary, mirroring the CLI ----------------------------- */
 
@@ -1723,6 +1781,43 @@ select:focus-visible {
 
 .mono-path { font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); }
 
+/* --- resolution pathway -------------------------------------------------- */
+
+.resolve-command {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+.resolve-command code {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-1);
+  background: var(--s-0);
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-sm);
+  padding: 6px 8px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.resolve-command button {
+  flex-shrink: 0;
+  padding: 5px 9px;
+  font-size: 11px;
+}
+
+.report-risk-resolve {
+  padding: 0 10px 10px;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.report-risk-resolve .insp-section { margin-bottom: 0; padding-top: var(--sp-2); }
+.report-risk-resolve .insp-section-title { border-bottom: none; padding-bottom: 0; margin-bottom: var(--sp-1); }
+
 /* --- scrollbars --------------------------------------------------------- */
 
 * { scrollbar-width: thin; scrollbar-color: var(--line-3) transparent; }
@@ -1753,3 +1848,232 @@ select:focus-visible {
   max-width: none;
   white-space: nowrap;
 }
+
+/* =========================================================================
+   Shell redesign: top bar, context card, stat hero, node icons, progressive
+   disclosure. Appended for the same reason as the design-system block above
+   -- layers over everything before it instead of rewriting it.
+   ========================================================================= */
+
+/* --- top bar ------------------------------------------------------------- */
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--s-1);
+  border-bottom: 1px solid var(--line-1);
+  flex: 0 0 auto;
+}
+
+.top-bar .brand {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.top-bar-context {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-size: 12px;
+  color: var(--ink-3);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.top-bar-repo {
+  color: var(--ink-2);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.top-bar-sep {
+  flex-shrink: 0;
+}
+
+.top-bar-change {
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.top-bar .view-tabs {
+  padding: 0;
+  border-bottom: none;
+  background: transparent;
+  flex-shrink: 0;
+}
+
+/* --- sidebar context card ------------------------------------------------ */
+
+.context-card {
+  margin-bottom: var(--sp-5);
+}
+
+.context-repo {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-1);
+  text-decoration: none;
+  margin-bottom: var(--sp-2);
+}
+
+a.context-repo:hover {
+  color: var(--accent);
+}
+
+.context-repo-plain {
+  color: var(--ink-2);
+}
+
+.context-change {
+  margin: 0;
+  color: var(--ink-1);
+  font-weight: 600;
+  line-height: 1.5;
+  font-size: 13px;
+}
+
+/* --- stat hero ------------------------------------------------------------ */
+
+.stat-hero {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-5);
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--sp-3) var(--sp-2);
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-md);
+  background: var(--s-2);
+}
+
+.stat-label {
+  color: var(--ink-3);
+  font-size: 9.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink-1);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.stat-card-risk {
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.stat-card-risk .stat-value {
+  color: var(--sev-high);
+}
+
+.stat-card-severity.severity-critical .stat-value { color: var(--sev-critical); }
+.stat-card-severity.severity-high .stat-value { color: var(--sev-high); }
+.stat-card-severity.severity-medium .stat-value { color: var(--sev-medium); }
+.stat-card-severity.severity-low .stat-value { color: var(--sev-low); }
+
+/* --- node icons ------------------------------------------------------------ */
+
+.node-icon {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.legend-item .node-icon {
+  opacity: 0.9;
+}
+
+/* --- inspector empty state -------------------------------------------------- */
+
+.inspector.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-top: var(--sp-6);
+}
+
+.inspector-empty-icon {
+  color: var(--ink-3);
+  margin-bottom: var(--sp-4);
+}
+
+.inspector-empty-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-1);
+  margin-bottom: var(--sp-2);
+}
+
+.inspector.empty-state p {
+  margin: 0 0 var(--sp-2);
+  color: var(--ink-2);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+/* --- inspector progressive disclosure --------------------------------------- */
+
+.insp-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0 0 var(--sp-2);
+  border-bottom: 1px solid var(--line-1);
+  margin-bottom: var(--sp-3);
+  border-radius: 0;
+}
+
+.insp-toggle:hover:not(:disabled) {
+  background: transparent;
+  border-color: var(--line-2);
+}
+
+.insp-section-title-inline {
+  font-size: 9.5px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 700;
+}
+
+.insp-toggle-count {
+  font-size: 10.5px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.insp-toggle[aria-expanded='true'] .insp-toggle-count::after {
+  content: ' \2013 hide';
+}
+
+/* --- report risk cards: meaning on the left edge, matching graph nodes ----- */
+
+.report-risk-card {
+  border-left: 3px solid var(--sev-medium);
+}
+
+.report-risk-card.severity-critical { border-left-color: var(--sev-critical); }
+.report-risk-card.severity-high { border-left-color: var(--sev-high); }
+.report-risk-card.severity-low { border-left-color: var(--sev-low); }

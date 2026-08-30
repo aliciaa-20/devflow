@@ -297,6 +297,83 @@ def _cmd_resolve(args: argparse.Namespace) -> int:
     return resolution_main(["request", args.finding_id, "--report", args.report])
 
 
+def _cmd_resolve_auto(args: argparse.Namespace) -> int:
+    """Automated resolution: approve, wait for Bob output, ingest, ask for Gate 2, apply, validate."""
+    import getpass
+    from devflow.resolution._build import (
+        create_resolution_request,
+        decide_investigation_gate,
+        ingest_proposed_fix,
+        decide_apply_gate,
+        wait_for_bob_investigation,
+    )
+    from devflow.resolution._sessions import session_dir, write_raw_text
+    from devflow.resolution.cli import _print_finding, _confirm
+
+    report_path = Path(args.report)
+    report_payload = json.loads(report_path.read_text(encoding="utf-8"))
+
+    # Gate 1: investigate
+    request = create_resolution_request(report_payload, args.finding_id)
+    _print_finding(request.finding_snapshot)
+
+    approved = _confirm("Approve Bob investigation for this finding?")
+    request = decide_investigation_gate(request, approved=approved, decided_by=getpass.getuser())
+
+    if not approved:
+        emit(section("resolution"))
+        print(field("status", paint("REJECTED", "red")))
+        return 0
+
+    # Show prompt path and wait for Bob output
+    prompt_path = session_dir(request.id) / "bob_prompt.md"
+    emit(section("next"))
+    emit(steps(["Open Bob IDE and switch to the `resolver` custom mode.", "Paste the investigation prompt below.", "Save Bob's \"Propose the Fix\" output (DevFlow will detect it)."])
+    )
+    print()
+    print(field("prompt", str(prompt_path)))
+    print()
+    print(paint("  waiting for Bob investigation output (timeout: 10 min)...", "grey"))
+
+    try:
+        bob_raw_output = wait_for_bob_investigation(request.id, timeout_seconds=600)
+    except TimeoutError as e:
+        print(paint(f"  {e}", "red"), file=sys.stderr)
+        return 1
+
+    # Ingest and Gate 2: apply
+    request = ingest_proposed_fix(request, Path(prompt_path.parent / "bob_investigation.md"))
+
+    fix = request.proposed_fix
+    emit(title("proposed fix", fix.summary))
+    print(field("root cause", fix.root_cause))
+    print(field("files", ", ".join(fix.files_to_modify) or paint("(none listed)", "grey")))
+    print(field("tests", ", ".join(fix.tests_to_add_or_update) or paint("(none listed)", "grey")))
+    emit(wrap(f"validation plan: {fix.validation_plan}", indent=2))
+    print()
+
+    approved = _confirm("Apply this fix and run tests?")
+    request = decide_apply_gate(request, approved=approved, decided_by=getpass.getuser())
+
+    if not approved:
+        emit(section("resolution"))
+        print(field("status", paint("FIX_REJECTED", "red")))
+        return 0
+
+    # For now, just tell the user to finish the fix in Bob and call validate
+    emit(section("next"))
+    emit(steps(["Let Bob implement the fix in your local checkout.", 'Save Bob\'s closing "Resolution Summary" output to a file.'])
+    )
+    print()
+    print(
+        command_hint(
+            f'devflow validate {request.id} --local-path <checkout> '
+            '--result <bob-result.md> --test-command "<command>"'
+        )
+    )
+    return 0
+
+
 def _cmd_apply(args: argparse.Namespace) -> int:
     from devflow.resolution.cli import main as resolution_main
 
@@ -404,6 +481,17 @@ def build_parser() -> argparse.ArgumentParser:
     resolve.add_argument("finding_id", metavar="<finding-id>")
     resolve.add_argument("--report", default=DEFAULT_REPORT_PATH, metavar="PATH")
     resolve.set_defaults(func=_cmd_resolve)
+
+    resolve_auto = subparsers.add_parser(
+        "resolve-auto",
+        help="Automated resolution with polling for Bob output.",
+        description="Approve investigation (gate 1), wait for Bob investigation output, "
+        "ingest it, show the proposal, and ask for approval to apply (gate 2). "
+        "Polls bob_sessions/<id>/bob_investigation.md for 10 minutes.",
+    )
+    resolve_auto.add_argument("finding_id", metavar="<finding-id>")
+    resolve_auto.add_argument("--report", default=DEFAULT_REPORT_PATH, metavar="PATH")
+    resolve_auto.set_defaults(func=_cmd_resolve_auto)
 
     apply_cmd = subparsers.add_parser(
         "apply",

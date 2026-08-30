@@ -22,6 +22,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
+# Patterns that pytest and unittest emit at the end of a run.  These are
+# "best effort" -- if the output doesn't match we leave the counts as -1
+# rather than inventing numbers.
+_PYTEST_SUMMARY_RE = re.compile(
+    r"=+\s+(?:(\d+) passed)?(?:,?\s*(\d+) failed)?(?:,?\s*(\d+) error)?.*=+$",
+    re.MULTILINE,
+)
+_UNITTEST_SUMMARY_RE = re.compile(r"^Ran (\d+) tests? in", re.MULTILINE)
+
 from devflow.models.resolution import (
     ApprovalDecision,
     ApprovalGate,
@@ -33,7 +42,9 @@ from devflow.models.resolution import (
 )
 from devflow.resolution._ingest import parse_proposed_fix, parse_resolution_summary
 from devflow.resolution._prompt import build_bob_prompt
-from devflow.resolution._sessions import write_raw_text, write_request_snapshot, write_state
+from devflow.resolution._sessions import write_raw_text, write_request_snapshot, write_state, session_dir
+
+import time
 
 
 def _slugify(value: str) -> str:
@@ -186,6 +197,29 @@ def _git_modified_files(local_path: str | Path) -> tuple[str, ...]:
     return tuple(line.strip() for line in result.stdout.splitlines() if line.strip())
 
 
+def _parse_test_counts(combined: str) -> tuple[int, int]:
+    """Return (test_count, failure_count) parsed from test-runner summary output.
+
+    Returns (-1, -1) when no recognisable summary line is found -- the caller
+    must treat these as "not determinable", not as zero.
+    """
+    m = _PYTEST_SUMMARY_RE.search(combined)
+    if m:
+        passed_str, failed_str, error_str = m.group(1), m.group(2), m.group(3)
+        failures = (int(failed_str) if failed_str else 0) + (int(error_str) if error_str else 0)
+        passed = int(passed_str) if passed_str else 0
+        return passed + failures, failures
+
+    m2 = _UNITTEST_SUMMARY_RE.search(combined)
+    if m2:
+        total = int(m2.group(1))
+        # unittest says "OK" or "FAILED" on the last line
+        failed = 0 if combined.rstrip().endswith("OK") else -1
+        return total, failed
+
+    return -1, -1
+
+
 def _run_test_command(command: str, *, cwd: str | Path) -> tuple[TestExecutionRecord, str]:
     """Actually execute the developer-approved test command -- never simulated."""
     try:
@@ -197,18 +231,32 @@ def _run_test_command(command: str, *, cwd: str | Path) -> tuple[TestExecutionRe
             text=True,
             timeout=600,
         )
-        combined_output = (result.stdout or "") + (result.stderr or "")
+        stdout = result.stdout or ""
+        stderr = result.stderr or ""
+        combined_output = stdout + stderr
+        test_count, failure_count = _parse_test_counts(combined_output)
         record = TestExecutionRecord(
             command=command,
             passed=result.returncode == 0,
             exit_code=result.returncode,
             output_excerpt=combined_output[-4000:],
+            stdout=stdout,
+            stderr=stderr,
+            test_count=test_count,
+            failure_count=failure_count,
         )
         return record, combined_output
     except subprocess.TimeoutExpired as exc:
         combined_output = f"Command timed out after {exc.timeout}s."
         record = TestExecutionRecord(
-            command=command, passed=False, exit_code=-1, output_excerpt=combined_output
+            command=command,
+            passed=False,
+            exit_code=-1,
+            output_excerpt=combined_output,
+            stdout="",
+            stderr=combined_output,
+            test_count=-1,
+            failure_count=-1,
         )
         return record, combined_output
 
@@ -268,3 +316,32 @@ def run_validation(
     request.status = ResolutionStatus.VALIDATED
     write_state(request, bob_sessions_dir=bob_sessions_dir)
     return request
+
+
+def wait_for_bob_investigation(
+    resolution_id: str,
+    *,
+    timeout_seconds: int = 600,
+    bob_sessions_dir: Optional[str | Path] = None,
+) -> str:
+    """Poll for bob_investigation.md to appear in the session directory.
+
+    Returns the raw text content when the file is detected.
+    Raises TimeoutError if timeout is exceeded.
+    """
+    start_time = time.time()
+    poll_interval = 2  # seconds
+
+    session = session_dir(resolution_id, bob_sessions_dir=bob_sessions_dir)
+    investigation_path = session / "bob_investigation.md"
+
+    while time.time() - start_time < timeout_seconds:
+        if investigation_path.is_file():
+            return investigation_path.read_text(encoding="utf-8")
+        time.sleep(poll_interval)
+
+    elapsed = int(time.time() - start_time)
+    raise TimeoutError(
+        f"Waited {elapsed}s for Bob investigation output. "
+        f"Save Bob's 'Propose the Fix' output to {investigation_path}"
+    )

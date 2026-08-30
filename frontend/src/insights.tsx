@@ -317,6 +317,41 @@ export function RankingNote({ ranking }: { ranking: Ranking | null }) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Resolution pathway
+// ---------------------------------------------------------------------------
+
+/**
+ * Phase 8 resolution is CLI-only (`devflow.resolution request/ingest-fix/validate`
+ * driven by Bob's `resolver` custom mode) -- there is no invented HTTP/API
+ * bridge here, just the exact command a developer runs next, with the real
+ * finding id filled in.
+ */
+export function ResolvePathway({ findingId }: { findingId: string }) {
+  const [copied, setCopied] = useState(false);
+  const command = `python -m devflow.resolution request ${findingId}`;
+
+  return (
+    <div className="insp-section">
+      <div className="insp-section-title">Resolution</div>
+      <div className="ev-text">Hand this finding to IBM Bob's investigation and resolution workflow.</div>
+      <div className="resolve-command">
+        <code>{command}</code>
+        <button
+          type="button"
+          onClick={() => {
+            navigator.clipboard?.writeText(command).catch(() => {});
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1400);
+          }}
+        >
+          {copied ? 'Copied' : 'Copy'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function SeverityChip({ severity }: { severity?: string | null }) {
   if (!severity) return null;
   const key = String(severity).toLowerCase();

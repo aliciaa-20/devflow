@@ -14,13 +14,14 @@ import {
   type NodeProps,
   ReactFlowProvider,
 } from '@xyflow/react';
-import dagre from '@dagrejs/dagre';
 import ReportPanel, { type ReportData } from './ReportPanel';
 import Dropdown from './ui/Dropdown';
+import NodeIcon from './ui/NodeIcon';
 import {
   BlastRadius,
   EvidenceList,
   RankingNote,
+  ResolvePathway,
   TestCoverage,
   useRepoIndex,
   type Ranking,
@@ -54,21 +55,12 @@ export type GraphData = {
 type AppProps = { graph: GraphData; report?: ReportData; error?: string; active?: boolean };
 type NodeTypeFilter = 'all' | 'change' | 'source' | 'test' | 'documentation' | 'dependency' | 'configuration' | 'historical' | 'risk';
 
-// A wide, star-shaped graph (one change node, many impacted files) fits only
-// by zooming until every label is unreadable. Cap the zoom so the initial
-// view stays legible; the minimap and panning cover the rest.
-const READABLE_MAX_ZOOM = 0.85;
+// The radial layout keeps the whole map roughly circular rather than an
+// extreme-aspect-ratio ribbon, so a modest cap keeps labels legible without
+// needing to zoom out to near-illegibility the way the old tree layout did.
+const READABLE_MAX_ZOOM = 0.9;
 
-/**
- * Open the map centred on the change itself, at a readable zoom.
- *
- * A change with many impacted files lays out as an extremely wide ribbon --
- * roughly 8000px across and 700px tall on the Flask sample. Fitting that into
- * a viewport means scaling to ~0.2, where every label is an illegible smear.
- * Landing on the change node instead shows the developer what they asked about
- * and its nearest neighbours at full size; Fit, the minimap and panning are
- * still there for the overview.
- */
+/** Open the map centred on the change itself, at a readable zoom. */
 function openAtChangeNode(instance: any, nodes: Node[]) {
   const change =
     nodes.find((node) => String(node.data?.nodeType) === 'change') ?? nodes[0];
@@ -77,16 +69,18 @@ function openAtChangeNode(instance: any, nodes: Node[]) {
     return;
   }
   const width = Number(change.measured?.width ?? minNodeWidth);
+  const height = Number(change.measured?.height ?? nodeHeight);
   instance.setCenter(
     change.position.x + width / 2,
-    change.position.y + nodeHeight / 2,
+    change.position.y + height / 2,
     { zoom: READABLE_MAX_ZOOM, duration: 220 },
   );
 }
 
-const nodeHeight = 92;
-const minNodeWidth = 170;
-const maxNodeWidth = 280;
+const nodeHeight = 68;
+const changeNodeHeight = 88;
+const minNodeWidth = 148;
+const maxNodeWidth = 232;
 
 const typePalette: Record<string, string> = {
   change: '#8b5cf6',
@@ -155,8 +149,8 @@ const confidenceBorderStyle = (metadata?: Record<string, any>): 'solid' | 'dashe
 
 function estimateNodeWidth(label: string, nodeType: string) {
   const charCount = Math.max(label.length, 12);
-  const baseWidth = nodeType === 'change' ? 220 : 180;
-  const width = baseWidth + Math.min(120, Math.max(0, charCount - 16) * 7);
+  const baseWidth = nodeType === 'change' ? 216 : 156;
+  const width = baseWidth + Math.min(100, Math.max(0, charCount - 16) * 6);
   return Math.min(maxNodeWidth, Math.max(minNodeWidth, width));
 }
 
@@ -172,63 +166,250 @@ function makeNodeData(node: GraphData['nodes'][number]): Record<string, any> {
   };
 }
 
+const RADIAL_TYPE_ORDER = ['source', 'test', 'documentation', 'dependency', 'configuration', 'historical', 'other'];
+const RING_GAP = 172;
+const RISK_RING_GAP = 158;
+const MIN_RING_RADIUS = 280;
+const MIN_SECTOR_DEG = 26;
+const SIBLING_SPREAD_DEG = 15;
+const NODE_GAP = 40;
+
+const toRad = (deg: number) => (deg * Math.PI) / 180;
+
+type Polar = { cx: number; cy: number; angle: number; radius: number };
+
+function sideForAngleDeg(deg: number): 'top' | 'right' | 'bottom' | 'left' {
+  const a = ((deg % 360) + 360) % 360;
+  if (a >= 315 || a < 45) return 'right';
+  if (a < 135) return 'bottom';
+  if (a < 225) return 'left';
+  return 'top';
+}
+
+function buildAdjacency(nodeIds: string[], edges: GraphData['edges']) {
+  const adjacency = new Map<string, string[]>();
+  nodeIds.forEach((id) => adjacency.set(id, []));
+  edges.forEach((edge) => {
+    if (!adjacency.has(edge.source) || !adjacency.has(edge.target)) return;
+    adjacency.get(edge.source)!.push(edge.target);
+    adjacency.get(edge.target)!.push(edge.source);
+  });
+  // Deterministic traversal order regardless of the edge array's own order.
+  adjacency.forEach((list) => list.sort());
+  return adjacency;
+}
+
+/** Shortest-hop BFS distance (and discovery parent) from the change node, so
+ * the radial layout can place directly-affected artifacts on the inner ring
+ * and anything reached only transitively further out -- without assuming any
+ * particular graph shape. */
+function bfsFromRoot(rootId: string, adjacency: Map<string, string[]>) {
+  const depth = new Map<string, number>([[rootId, 0]]);
+  const parent = new Map<string, string>();
+  const queue = [rootId];
+  while (queue.length) {
+    const current = queue.shift()!;
+    const currentDepth = depth.get(current)!;
+    for (const next of adjacency.get(current) ?? []) {
+      if (depth.has(next)) continue;
+      depth.set(next, currentDepth + 1);
+      parent.set(next, current);
+      queue.push(next);
+    }
+  }
+  return { depth, parent };
+}
+
+/**
+ * Radial/orbital layout: the change node anchors the centre: nodes it
+ * directly touches form an inner ring clustered by type (source together,
+ * tests together, etc.), risk nodes orbit just outside the specific artifact
+ * they were raised against (via `risk_for`), and anything reached only
+ * transitively sits one ring further out from its own discovery parent. Pure
+ * function of the graph's actual relationships and node ids -- no
+ * Math.random -- so the same report always produces the same composition.
+ */
 function getGraphLayout(graph: GraphData) {
-  const largeGraph = graph.nodes.length > 40 || graph.edges.length > 80;
-  const changeNode = graph.nodes.find((node) => deriveNodeType(node.node_type) === 'change');
-  const rootId = changeNode?.id ?? graph.nodes[0]?.id ?? null;
+  const entries = graph.nodes.map((node) => ({ id: node.id, label: node.label, data: makeNodeData(node) }));
+  const nodeTypeById = new Map(entries.map((entry) => [entry.id, entry.data.nodeType]));
+  const dims = new Map(
+    entries.map((entry) => [
+      entry.id,
+      {
+        width: estimateNodeWidth(entry.label, entry.data.nodeType),
+        height: entry.data.nodeType === 'change' ? changeNodeHeight : nodeHeight,
+      },
+    ]),
+  );
 
-  const dagreGraph = new dagre.graphlib.Graph();
-  dagreGraph.setDefaultEdgeLabel(() => ({}));
-  dagreGraph.setGraph({
-    rankdir: largeGraph ? 'LR' : 'TB',
-    align: 'UL',
-    nodesep: largeGraph ? 60 : 70,
-    ranksep: largeGraph ? 120 : 150,
-    marginx: 80,
-    marginy: 70,
-    acyclicer: true,
+  const changeEntry = entries.find((entry) => entry.data.nodeType === 'change') ?? entries[0];
+  const rootId = changeEntry?.id ?? null;
+  const allIds = entries.map((entry) => entry.id);
+  const adjacency = buildAdjacency(allIds, graph.edges);
+  const { depth, parent } = rootId
+    ? bfsFromRoot(rootId, adjacency)
+    : { depth: new Map<string, number>(), parent: new Map<string, string>() };
+
+  // risk_for is directional in the data as risk -> affected artifact, but
+  // resolve it by node type rather than assume edge direction.
+  const riskTargets = new Map<string, string[]>();
+  graph.edges.forEach((edge) => {
+    if (edge.relationship !== 'risk_for') return;
+    const sourceIsRisk = nodeTypeById.get(edge.source) === 'risk';
+    const targetIsRisk = nodeTypeById.get(edge.target) === 'risk';
+    if (sourceIsRisk && !targetIsRisk) {
+      if (!riskTargets.has(edge.source)) riskTargets.set(edge.source, []);
+      riskTargets.get(edge.source)!.push(edge.target);
+    } else if (targetIsRisk && !sourceIsRisk) {
+      if (!riskTargets.has(edge.target)) riskTargets.set(edge.target, []);
+      riskTargets.get(edge.target)!.push(edge.source);
+    }
+  });
+  riskTargets.forEach((list) => list.sort());
+
+  const positions = new Map<string, Polar>();
+  if (rootId) positions.set(rootId, { cx: 0, cy: 0, angle: 0, radius: 0 });
+
+  // Inner ring: everything the change directly touches, except risks (which
+  // orbit their affected artifact instead) -- plus anything unreachable from
+  // the change at all, so nothing the backend sent is ever dropped.
+  const ring1Ids = entries
+    .filter((entry) => entry.id !== rootId && entry.data.nodeType !== 'risk' && (depth.get(entry.id) === 1 || !depth.has(entry.id)))
+    .map((entry) => entry.id);
+
+  const groups = RADIAL_TYPE_ORDER.map((type) => ({
+    type,
+    ids: ring1Ids.filter((id) => (nodeTypeById.get(id) ?? 'other') === type),
+  })).filter((group) => group.ids.length);
+
+  const ring1Total = ring1Ids.length || 1;
+  const rawSpans = groups.map((group) => Math.max(MIN_SECTOR_DEG, (group.ids.length / ring1Total) * 360));
+  const rawSum = rawSpans.reduce((a, b) => a + b, 0) || 1;
+  const scale = rawSum > 360 ? 360 / rawSum : 1;
+
+  let ring1Radius = MIN_RING_RADIUS;
+  let cursor = -90; // start at the top, sweep clockwise
+  const ring1Angle = new Map<string, number>();
+  groups.forEach((group, index) => {
+    const span = rawSpans[index] * scale;
+    const step = span / group.ids.length;
+    group.ids.forEach((id, idx) => {
+      ring1Angle.set(id, cursor + step * (idx + 0.5));
+    });
+    if (group.ids.length > 1) {
+      const stepRad = toRad(Math.max(step, 2));
+      const maxWidth = Math.max(...group.ids.map((id) => dims.get(id)!.width));
+      const required = (maxWidth + NODE_GAP) / (2 * Math.sin(stepRad / 2));
+      ring1Radius = Math.max(ring1Radius, required);
+    }
+    cursor += span;
+  });
+  ring1Radius = Math.min(ring1Radius, 900);
+
+  ring1Ids.forEach((id) => {
+    const angle = ring1Angle.get(id) ?? 0;
+    const rad = toRad(angle);
+    positions.set(id, { cx: ring1Radius * Math.cos(rad), cy: ring1Radius * Math.sin(rad), angle, radius: ring1Radius });
   });
 
-  const nodes: Node[] = graph.nodes.map((node) => {
-    const data = makeNodeData(node);
-    const width = estimateNodeWidth(node.label, data.nodeType);
+  // Risk satellites: orbit just outside whichever artifact they were raised
+  // against, so "change -> affected area -> risk" reads as a single spoke.
+  const riskIds = entries.filter((entry) => entry.data.nodeType === 'risk').map((entry) => entry.id);
+  const riskGroups = new Map<string, string[]>();
+  riskIds.forEach((id) => {
+    const key = riskTargets.get(id)?.[0] ?? '__none__';
+    if (!riskGroups.has(key)) riskGroups.set(key, []);
+    riskGroups.get(key)!.push(id);
+  });
+  riskGroups.forEach((ids) => ids.sort());
+  riskGroups.forEach((ids, targetId) => {
+    const targetPos = targetId !== '__none__' ? positions.get(targetId) : undefined;
+    const baseAngle = targetPos?.angle ?? -90;
+    const baseRadius = targetPos?.radius ?? ring1Radius;
+    const n = ids.length;
+    ids.forEach((id, idx) => {
+      const angle = baseAngle + (idx - (n - 1) / 2) * SIBLING_SPREAD_DEG;
+      const radius = baseRadius + RISK_RING_GAP;
+      const rad = toRad(angle);
+      positions.set(id, { cx: radius * Math.cos(rad), cy: radius * Math.sin(rad), angle, radius });
+    });
+  });
+
+  // Anything reached only transitively (depth >= 2, non-risk): satellite of
+  // its own BFS discovery parent, one ring further out. Generalises to
+  // graphs with real multi-hop chains without special-casing them.
+  const deeperIds = entries
+    .filter((entry) => entry.data.nodeType !== 'risk' && (depth.get(entry.id) ?? 0) >= 2)
+    .map((entry) => entry.id)
+    .sort((a, b) => (depth.get(a)! - depth.get(b)!) || a.localeCompare(b));
+  const childrenByParent = new Map<string, string[]>();
+  deeperIds.forEach((id) => {
+    const parentId = parent.get(id)!;
+    if (!childrenByParent.has(parentId)) childrenByParent.set(parentId, []);
+    childrenByParent.get(parentId)!.push(id);
+  });
+  childrenByParent.forEach((ids) => ids.sort());
+  deeperIds.forEach((id) => {
+    const parentId = parent.get(id)!;
+    const parentPos = positions.get(parentId);
+    if (!parentPos) return;
+    const siblings = childrenByParent.get(parentId)!;
+    const idx = siblings.indexOf(id);
+    const angle = parentPos.angle + (idx - (siblings.length - 1) / 2) * SIBLING_SPREAD_DEG;
+    const radius = parentPos.radius + RING_GAP;
+    const rad = toRad(angle);
+    positions.set(id, { cx: radius * Math.cos(rad), cy: radius * Math.sin(rad), angle, radius });
+  });
+
+  // Safety net: anything still unplaced (e.g. a risk with no resolvable
+  // target and no change node at all) gets a deterministic fallback ring.
+  let fallbackIndex = 0;
+  entries.forEach((entry) => {
+    if (positions.has(entry.id)) return;
+    const angle = (fallbackIndex * 47) % 360;
+    const radius = MIN_RING_RADIUS + RING_GAP;
+    fallbackIndex += 1;
+    positions.set(entry.id, { cx: radius * Math.cos(toRad(angle)), cy: radius * Math.sin(toRad(angle)), angle, radius });
+  });
+
+  const nodes: Node[] = entries.map((entry) => {
+    const { width, height } = dims.get(entry.id)!;
+    const pos = positions.get(entry.id)!;
     return {
-      id: node.id,
-      type: data.nodeType === 'risk' ? 'risk' : data.nodeType === 'change' ? 'change' : 'artifact',
-      position: { x: 0, y: 0 },
-      data,
-      className: `node-${data.nodeType}`,
-      sourcePosition: Position.Right,
-      targetPosition: Position.Left,
+      id: entry.id,
+      type: entry.data.nodeType === 'risk' ? 'risk' : entry.data.nodeType === 'change' ? 'change' : 'artifact',
+      position: { x: pos.cx - width / 2, y: pos.cy - height / 2 },
+      data: entry.data,
+      className: `node-${entry.data.nodeType}`,
       draggable: true,
-      measured: { width, height: nodeHeight },
+      measured: { width, height },
     };
-  });
-
-  nodes.forEach((node) => {
-    const width =
-      typeof node.measured?.width === 'number'
-        ? node.measured.width
-        : estimateNodeWidth(String(node.data?.label ?? ''), String(node.data?.nodeType ?? 'artifact'));
-    dagreGraph.setNode(node.id, { width, height: nodeHeight });
   });
 
   const edges: Edge[] = graph.edges.map((edge) => {
     const relationship = edge.relationship ?? 'related_to';
     const style = relationshipStyles[relationship] ?? { color: '#a5b4fc', label: relationship };
+    const isRiskEdge = relationship === 'has_risk' || relationship === 'risk_for';
+    const sourcePos = positions.get(edge.source) ?? { cx: 0, cy: 0, angle: 0, radius: 0 };
+    const targetPos = positions.get(edge.target) ?? { cx: 0, cy: 0, angle: 0, radius: 0 };
+    const dx = targetPos.cx - sourcePos.cx;
+    const dy = targetPos.cy - sourcePos.cy;
+    const directionDeg = (Math.atan2(dy, dx) * 180) / Math.PI;
     return {
       id: edge.id ?? `${edge.source}-${edge.target}-${relationship}`,
       source: edge.source,
       target: edge.target,
+      sourceHandle: `source-${sideForAngleDeg(directionDeg)}`,
+      targetHandle: `target-${sideForAngleDeg(directionDeg + 180)}`,
       label: style.label,
-      type: 'smoothstep',
-      markerEnd: { type: MarkerType.ArrowClosed, color: style.color },
+      type: 'straight',
+      markerEnd: isRiskEdge ? { type: MarkerType.ArrowClosed, color: style.color } : undefined,
       style: { stroke: style.color, strokeWidth: 2 },
       labelStyle: { fill: '#dfeaff', fontSize: 11, fontWeight: 600 },
       labelBgStyle: { fill: 'rgba(11, 18, 31, 0.92)' },
       labelBgPadding: [6, 3] as [number, number],
       labelBgBorderRadius: 4,
-      animated: false,
+      animated: isRiskEdge,
       data: {
         relationship,
         description: edge.description ?? '',
@@ -238,38 +419,42 @@ function getGraphLayout(graph: GraphData) {
     };
   });
 
-  edges.forEach((edge) => dagreGraph.setEdge(edge.source, edge.target));
-  dagre.layout(dagreGraph);
+  return { nodes, edges };
+}
 
-  const rootNode = rootId ? dagreGraph.node(rootId) : null;
-  const translateX = rootNode?.x ?? 0;
-  const translateY = rootNode?.y ?? 0;
-
-  const laidOutNodes = nodes.map((node) => {
-    const gnode = dagreGraph.node(node.id);
-    return {
-      ...node,
-      position: {
-        x: gnode.x - translateX,
-        y: gnode.y - translateY,
-      },
-    };
-  });
-
-  return { nodes: laidOutNodes, edges };
+// The radial layout connects nodes in every direction, not just left-to-right,
+// so each node exposes a source+target handle pair on all four sides and the
+// edge builder in `getGraphLayout` picks whichever pair actually faces the
+// other endpoint. The handles themselves are invisible (see index.css) --
+// nodesConnectable is false, so nothing is ever dragged from them.
+function FloatingHandles() {
+  return (
+    <>
+      <Handle type="target" position={Position.Top} id="target-top" />
+      <Handle type="source" position={Position.Top} id="source-top" />
+      <Handle type="target" position={Position.Right} id="target-right" />
+      <Handle type="source" position={Position.Right} id="source-right" />
+      <Handle type="target" position={Position.Bottom} id="target-bottom" />
+      <Handle type="source" position={Position.Bottom} id="source-bottom" />
+      <Handle type="target" position={Position.Left} id="target-left" />
+      <Handle type="source" position={Position.Left} id="source-left" />
+    </>
+  );
 }
 
 function ChangeNode(props: NodeProps) {
   const { data, selected } = props;
   return (
     <div className={`flow-node change ${selected ? 'selected' : ''}`}>
-      <Handle type="target" position={Position.Left} />
-      <div className="node-header">CHANGE</div>
+      <FloatingHandles />
+      <div className="node-header">
+        <NodeIcon type="change" />
+        <span>CHANGE</span>
+      </div>
       <div className="node-body">
         <strong>{data.label}</strong>
         <small>{data.metadata?.repository_url || data.metadata?.name || 'Repository change'}</small>
       </div>
-      <Handle type="source" position={Position.Right} />
     </div>
   );
 }
@@ -284,8 +469,9 @@ export function ArtifactNode(props: NodeProps) {
   const childCount = (data as any).childCount as number | undefined;
   return (
     <div className={`flow-node artifact ${selected ? 'selected' : ''}`}>
-      <Handle type="target" position={Position.Left} />
+      <FloatingHandles />
       <div className="node-header">
+        <NodeIcon type={String(data.nodeType || 'artifact')} />
         <span>{String(data.nodeType || 'artifact').toUpperCase()}</span>
         {isDirectory && childCount ? (
           <button
@@ -304,7 +490,6 @@ export function ArtifactNode(props: NodeProps) {
       <div className="node-body">
         <strong className="node-label-mono">{data.label}</strong>
       </div>
-      <Handle type="source" position={Position.Right} />
     </div>
   );
 }
@@ -313,12 +498,14 @@ function RiskNode(props: NodeProps) {
   const { data, selected } = props;
   return (
     <div className={`flow-node risk severity-${String(data.riskSeverity || 'medium').toLowerCase()} ${selected ? 'selected' : ''}`}>
-      <Handle type="target" position={Position.Left} />
-      <div className="risk-header">{(data.riskSeverity || 'MEDIUM').toUpperCase()} RISK</div>
+      <FloatingHandles />
+      <div className="risk-header">
+        <NodeIcon type="risk" />
+        <span>{(data.riskSeverity || 'MEDIUM').toUpperCase()} RISK</span>
+      </div>
       <div className="node-body">
         <strong className="node-label-mono">{data.label}</strong>
       </div>
-      <Handle type="source" position={Position.Right} />
     </div>
   );
 }
@@ -351,26 +538,35 @@ function AnalysisOverview({
 
   return (
     <aside className="sidebar">
-      <div className="brand"><span className="brand-mark" /> DEVFLOW</div>
-      <div className="view-kicker view-kicker-change">Change Impact Map</div>
-      <div className="panel-block">
-        <div className="panel-title">CHANGE</div>
-        <div className="summary-change">{error ? 'Unable to load Phase 6 graph data.' : (graph.change_summary || 'Change not available')}</div>
-      </div>
-      {graph.repository_url && (
-        <div className="panel-block">
-          <div className="panel-title">REPOSITORY</div>
-          <div className="repo-link">
-            <a href={graph.repository_url} target="_blank" rel="noopener noreferrer">
-              {graph.owner || 'Repository'}/{graph.name || 'project'}
-            </a>
+      <div className="context-card">
+        {graph.repository_url ? (
+          <a className="context-repo" href={graph.repository_url} target="_blank" rel="noopener noreferrer">
+            <NodeIcon type="repository" />
+            {graph.owner || 'Repository'}/{graph.name || 'project'}
+          </a>
+        ) : (
+          <div className="context-repo context-repo-plain">
+            <NodeIcon type="repository" />
+            {graph.owner || 'Repository'}/{graph.name || 'project'}
           </div>
+        )}
+        <p className="context-change">
+          {error ? 'Unable to load Phase 6 graph data.' : (graph.change_summary || 'Change not available')}
+        </p>
+      </div>
+      <div className="stat-hero">
+        <div className="stat-card">
+          <span className="stat-label">Impacted</span>
+          <strong className="stat-value">{error ? 0 : artifactCount}</strong>
         </div>
-      )}
-      <div className="panel-block compact-metrics">
-        <div><span>IMPACT</span><strong>{error ? 0 : artifactCount}</strong></div>
-        <div className={!error && riskCount > 0 ? 'metric-risk' : ''}><span>RISKS</span><strong>{error ? 0 : riskCount}</strong></div>
-        <div><span>HIGHEST</span><strong>{error ? 'N/A' : highestRisk.toUpperCase()}</strong></div>
+        <div className={`stat-card ${!error && riskCount > 0 ? 'stat-card-risk' : ''}`}>
+          <span className="stat-label">Risks</span>
+          <strong className="stat-value">{error ? 0 : riskCount}</strong>
+        </div>
+        <div className={`stat-card stat-card-severity severity-${error ? 'none' : highestRisk}`}>
+          <span className="stat-label">Highest</span>
+          <strong className="stat-value">{error ? 'N/A' : highestRisk.toUpperCase()}</strong>
+        </div>
       </div>
       {error ? (
         <div className="panel-block">
@@ -378,15 +574,16 @@ function AnalysisOverview({
           <div className="summary-change">{error}</div>
         </div>
       ) : (
-        <div className="panel-block">
-          <div className="panel-title">ACTIONS</div>
-          <div className="toolbar-stack">
-            <button type="button" onClick={onFocusRisks}>Focus Risks</button>
-            <button type="button" onClick={onShowAll}>Show All</button>
-          </div>
+        <div className="panel-block sidebar-actions">
+          <button type="button" onClick={onFocusRisks}>Focus Risks</button>
+          <button type="button" onClick={onShowAll}>Show All</button>
         </div>
       )}
-      {report && !error ? <ReportPanel report={report} onSelectGraphNode={onSelectGraphNode} /> : null}
+      {report && !error ? (
+        <div className="sidebar-scroll">
+          <ReportPanel report={report} onSelectGraphNode={onSelectGraphNode} />
+        </div>
+      ) : null}
     </aside>
   );
 }
@@ -398,6 +595,7 @@ export function Inspector({
   allEdges,
   repoIndex,
   rankings,
+  riskFindingIdByNode,
 }: {
   selectedNode: Node | null;
   selectedEdge: Edge | null;
@@ -405,14 +603,19 @@ export function Inspector({
   allEdges: Edge[];
   repoIndex?: RepoIndex;
   rankings?: Map<string, Ranking>;
+  riskFindingIdByNode?: Map<string, string>;
 }) {
   const nodeLookup = useMemo(() => new Map(allNodes.map((node) => [node.id, node])), [allNodes]);
 
   if (!selectedNode && !selectedEdge) {
     return (
       <aside className="inspector empty-state">
-        <div className="panel-title">INSPECT</div>
-        <p>Select a node or relationship to inspect impact, evidence and risk.</p>
+        <svg className="inspector-empty-icon" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="10.5" cy="10.5" r="6.5" />
+          <line x1="15.3" y1="15.3" x2="20.5" y2="20.5" />
+        </svg>
+        <div className="inspector-empty-title">Explore the repository</div>
+        <p>Select a node or relationship to understand its impact.</p>
         <p className="inspector-hint">Double-click a node to focus its immediate connections.</p>
       </aside>
     );
@@ -446,10 +649,7 @@ export function Inspector({
           <div className="field-label">Description</div>
           <div>{selectedEdge.data?.description || 'No description available.'}</div>
         </div>
-        <div className="insp-section">
-          <div className="insp-section-title">Evidence</div>
-          <EvidenceList evidence={evidence} />
-        </div>
+        <CollapsibleEvidence evidence={evidence} />
       </aside>
     );
   }
@@ -533,11 +733,29 @@ export function Inspector({
         </>
       ) : null}
       <RankingNote ranking={ranking} />
-      <div className="insp-section">
-        <div className="insp-section-title">Evidence</div>
-        <EvidenceList evidence={evidence} />
-      </div>
+      {selectedNode?.data?.nodeType === 'risk' && riskFindingIdByNode?.has(selectedNode.id) ? (
+        <ResolvePathway findingId={riskFindingIdByNode.get(selectedNode.id)!} />
+      ) : null}
+      <CollapsibleEvidence evidence={evidence} />
     </aside>
+  );
+}
+
+function CollapsibleEvidence({ evidence }: { evidence: Array<Record<string, any>> }) {
+  const [open, setOpen] = useState(evidence.length <= 2);
+  return (
+    <div className="insp-section">
+      <button
+        type="button"
+        className="insp-toggle"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span className="insp-section-title-inline">Evidence</span>
+        <span className="insp-toggle-count">{evidence.length}</span>
+      </button>
+      {open ? <EvidenceList evidence={evidence} /> : null}
+    </div>
   );
 }
 
@@ -551,7 +769,7 @@ function Legend() {
           <div className="legend-items">
             {['Change', 'Source', 'Test', 'Documentation', 'Dependency', 'Configuration', 'Historical', 'Risk'].map((type) => (
               <div key={type} className="legend-item">
-                <span className={`legend-swatch ${type.toLowerCase()}`} />
+                <NodeIcon type={type.toLowerCase()} />
                 {type}
               </div>
             ))}
@@ -599,6 +817,19 @@ function App({ graph, report, error, active = true }: AppProps) {
       if (nodeId) byGraphNode.set(String(nodeId), entry);
     }
     return byGraphNode;
+  }, [report]);
+
+  // Maps a risk graph node to the finding id the resolution CLI expects, so
+  // the inspector can offer the exact `devflow.resolution request` command
+  // for the finding actually behind that node -- never invented.
+  const riskFindingIdByNode = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const finding of (report?.findings ?? []) as any[]) {
+      if (finding.category === 'risk' && finding.graph_node_id) {
+        map.set(String(finding.graph_node_id), String(finding.id));
+      }
+    }
+    return map;
   }, [report]);
 
   const { nodes: initialNodes, edges: initialEdges } = useMemo(() => getGraphLayout(graph), [graph]);
@@ -707,7 +938,10 @@ function App({ graph, report, error, active = true }: AppProps) {
       return {
         ...edge,
         style: { stroke, strokeWidth: isSelected ? 3.5 : isRiskEdge ? 2.6 : 1.5, opacity },
-        animated: isSelected || (riskFocus && isRiskEdge),
+        // Animation is reserved for what actually matters: a selected edge,
+        // or the risk path itself. Everything else stays static so motion
+        // keeps meaning something instead of becoming background noise.
+        animated: isSelected || isRiskEdge,
         label: isVisible ? relationshipStyles[relationship]?.label ?? relationship : '',
       };
     });
@@ -720,12 +954,43 @@ function App({ graph, report, error, active = true }: AppProps) {
     if (!flowReady) return;
     const flow = (window as any).__DEVFLOW_INSTANCE__;
     if (!flow) return;
-    const focusedNodes = selectedNodeId
-      ? nodes.filter((node) => node.id === selectedNodeId || focusedNodeIds.includes(node.id))
-      : nodes;
+    if (focusedNodeIds.length) {
+      // An explicit focus set (Focus Risks, Explore Connections): frame
+      // exactly that set with a bounding-box fit -- these are deliberately
+      // an area of the map, not a single point.
+      const focusedNodes = nodes.filter((node) => focusedNodeIds.includes(node.id) || node.id === selectedNodeId);
+      const padding = graph.nodes.length > 100 ? 0.18 : 0.22;
+      flow.fitView({ padding, duration: 220, maxZoom: READABLE_MAX_ZOOM, nodes: focusedNodes.length ? focusedNodes : undefined });
+      return;
+    }
+    if (selectedNodeId) {
+      // A plain selection: centre directly on the node rather than fitting a
+      // bounding box of it plus its graph-neighbours. In this radial layout
+      // almost every node's neighbour set includes the change node at the
+      // far centre, so that bounding box is nearly as wide as the whole
+      // graph -- fitting it would barely zoom in at all.
+      const node = nodes.find((candidate) => candidate.id === selectedNodeId);
+      if (node) {
+        const width = Number(node.measured?.width ?? minNodeWidth);
+        const height = Number(node.measured?.height ?? nodeHeight);
+        flow.setCenter(node.position.x + width / 2, node.position.y + height / 2, { zoom: 1.05, duration: 220 });
+        return;
+      }
+    }
     const padding = graph.nodes.length > 100 ? 0.18 : 0.22;
-    flow.fitView({ padding, duration: 220, maxZoom: READABLE_MAX_ZOOM, nodes: focusedNodes.length ? focusedNodes : undefined });
+    flow.fitView({ padding, duration: 220, maxZoom: READABLE_MAX_ZOOM });
   }, [flowReady, focusedNodeIds, graph.nodes.length, nodes, selectedNodeId]);
+
+  // Recentre whenever selection/focus actually changes -- as its own effect
+  // rather than a `setTimeout(handleFit, 0)` scattered into every setter
+  // call, so it always reads this render's fresh state instead of whatever
+  // was captured in the closure that scheduled the timeout. Deliberately NOT
+  // keyed on `nodes`, so dragging a node (which also changes `nodes`) never
+  // yanks the viewport back to a recenter mid-drag.
+  useEffect(() => {
+    handleFit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedNodeId, focusedNodeIds, riskFocus]);
 
   // Both views stay mounted (see main.tsx) so search/filter/selection/drag
   // state survives switching tabs -- but React Flow computes fitView against
@@ -737,9 +1002,9 @@ function App({ graph, report, error, active = true }: AppProps) {
   // first place).
   //
   // The very first time this pane becomes visible we open on the change node
-  // rather than fitting: fitting an 8000px-wide ribbon scales it to ~0.2 and
-  // nothing is readable. Later activations re-fit, because by then the
-  // developer has a selection or focus worth framing.
+  // rather than fitting, so the hero node is centred and legible immediately.
+  // Later activations re-fit, because by then the developer has a selection
+  // or focus worth framing.
   const hasOpened = useRef(false);
   useEffect(() => {
     if (!active) return;
@@ -772,8 +1037,16 @@ function App({ graph, report, error, active = true }: AppProps) {
     setFocusedEdgeIds([]);
     setStatusMessage('Graph reset');
     setNodes(initialNodes);
-    setTimeout(() => handleFit(), 0);
-  }, [handleFit, initialNodes]);
+    // Show All must always reframe the whole graph, even when there was no
+    // selection/focus to clear (e.g. after manually panning around) -- so it
+    // fits directly rather than relying on the selection-change effect,
+    // which wouldn't fire if selection was already empty.
+    if (flowReady) {
+      const flow = (window as any).__DEVFLOW_INSTANCE__;
+      flow?.fitView?.({ padding: graph.nodes.length > 100 ? 0.18 : 0.22, duration: 220, maxZoom: READABLE_MAX_ZOOM });
+    }
+    document.querySelector('.sidebar-scroll')?.scrollTo({ top: 0 });
+  }, [flowReady, graph.nodes.length, initialNodes]);
 
   const handleFocusRisks = useCallback(() => {
     const riskIds = new Set(nodes.filter((node) => node.data?.nodeType === 'risk').map((node) => node.id));
@@ -797,8 +1070,7 @@ function App({ graph, report, error, active = true }: AppProps) {
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
     setStatusMessage('Risk-focused view');
-    setTimeout(() => handleFit(), 0);
-  }, [handleFit, initialEdges, nodes]);
+  }, [initialEdges, nodes]);
 
   const focusNeighborhood = useCallback(
     (nodeId: string) => {
@@ -814,9 +1086,8 @@ function App({ graph, report, error, active = true }: AppProps) {
       setFocusedNodeIds(Array.from(neighborIds));
       setFocusedEdgeIds(Array.from(neighborEdgeIds));
       setStatusMessage('Exploring local neighborhood');
-      setTimeout(() => handleFit(), 0);
     },
-    [handleFit, initialEdges],
+    [initialEdges],
   );
 
   const handleExploreConnections = useCallback(() => {
@@ -830,7 +1101,9 @@ function App({ graph, report, error, active = true }: AppProps) {
   const focusSelectedNode = useCallback(() => {
     if (!selectedNodeId) return;
     setStatusMessage('Focused on selected node');
-    setTimeout(() => handleFit(), 0);
+    // Selection hasn't changed here, so the selection-change effect above
+    // won't fire on its own -- this is an explicit "redo the fit" action.
+    handleFit();
   }, [handleFit, selectedNodeId]);
 
   const handleReportNodeSelect = useCallback(
@@ -844,9 +1117,8 @@ function App({ graph, report, error, active = true }: AppProps) {
       setStatusMessage(`Report linked to ${label}`);
       setFlashNodeId(nodeId);
       setTimeout(() => setFlashNodeId(null), 900);
-      setTimeout(() => handleFit(), 0);
     },
-    [handleFit, nodes],
+    [nodes],
   );
 
   const onNodeClick = useCallback(
@@ -857,6 +1129,8 @@ function App({ graph, report, error, active = true }: AppProps) {
       setFocusedEdgeIds([]);
       setRiskFocus(false);
       setStatusMessage(`${node.data?.label ?? node.id} selected`);
+      // Recentring happens in the selection-change effect above, once this
+      // selection actually lands in state.
     },
     [],
   );
@@ -890,8 +1164,7 @@ function App({ graph, report, error, active = true }: AppProps) {
     setFocusedEdgeIds([]);
     setRiskFocus(false);
     setStatusMessage('Graph view restored');
-    setTimeout(() => handleFit(), 0);
-  }, [handleFit]);
+  }, []);
 
   const onInit = useCallback(
     (instance: any) => {
@@ -912,7 +1185,6 @@ function App({ graph, report, error, active = true }: AppProps) {
     return (
       <div className="app-shell">
         <aside className="sidebar">
-          <div className="brand"><span className="brand-mark" /> DEVFLOW</div>
           <div className="panel-block">
             <div className="panel-title">STATUS</div>
             <div className="summary-change">NO ANALYSIS LOADED</div>
@@ -981,30 +1253,28 @@ function App({ graph, report, error, active = true }: AppProps) {
               ))}
             </div>
           </Dropdown>
-          <Dropdown label="Relationships" active={relationshipFilter !== 'all'}>
-            <div className="dropdown-list">
-              <button
-                type="button"
-                className={relationshipFilter === 'all' ? 'active' : ''}
-                onClick={() => setRelationshipFilter('all')}
-              >
-                All relationships
-              </button>
-              {Object.keys(relationshipStyles).map((key) => (
-                <button
-                  key={key}
-                  type="button"
-                  className={relationshipFilter === key ? 'active' : ''}
-                  onClick={() => setRelationshipFilter(key)}
-                >
-                  {key.replace(/_/g, ' ')}
-                </button>
-              ))}
-            </div>
-          </Dropdown>
-          <Dropdown label="Focus">
+          <Dropdown label="View" align="right" active={relationshipFilter !== 'all'}>
             {(close) => (
               <div className="dropdown-list">
+                <div className="dropdown-group-title">Relationships</div>
+                <button
+                  type="button"
+                  className={relationshipFilter === 'all' ? 'active' : ''}
+                  onClick={() => setRelationshipFilter('all')}
+                >
+                  All relationships
+                </button>
+                {Object.keys(relationshipStyles).map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className={relationshipFilter === key ? 'active' : ''}
+                    onClick={() => setRelationshipFilter(key)}
+                  >
+                    {key.replace(/_/g, ' ')}
+                  </button>
+                ))}
+                <div className="dropdown-group-title">Focus</div>
                 <button type="button" disabled={!selectedNodeId} onClick={() => { focusSelectedNode(); close(); }}>
                   Focus Node
                 </button>
@@ -1014,16 +1284,13 @@ function App({ graph, report, error, active = true }: AppProps) {
                 <button type="button" onClick={() => { resetGraph(); close(); }}>
                   Reset / Show All
                 </button>
+                <div className="dropdown-group-title">Display</div>
+                <label className="dropdown-checkbox">
+                  <input type="checkbox" checked={showMiniMap} onChange={(event) => setShowMiniMap(event.target.checked)} />
+                  Minimap
+                </label>
               </div>
             )}
-          </Dropdown>
-          <Dropdown label="Display" align="right">
-            <div className="dropdown-list">
-              <label className="dropdown-checkbox">
-                <input type="checkbox" checked={showMiniMap} onChange={(event) => setShowMiniMap(event.target.checked)} />
-                Minimap
-              </label>
-            </div>
           </Dropdown>
         </div>
         {statusMessage ? <div className="graph-status">{statusMessage}</div> : null}
@@ -1072,6 +1339,7 @@ function App({ graph, report, error, active = true }: AppProps) {
         allEdges={displayEdges}
         repoIndex={repoIndex}
         rankings={rankings}
+        riskFindingIdByNode={riskFindingIdByNode}
       />
     </div>
   );

@@ -1,0 +1,50 @@
+# Prevents Bob from logging credentials in session history.
+# DO NOT REMOVE OR MODIFY THESE PATTERNS.
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IBM Cloud / watsonx credentials
+*IBM_CLOUD_API_KEY*
+*ibm_cloud_api_key*
+*IBMCLOUD_API_KEY*
+*DEVFLOW_WATSONX_APIKEY*
+*devflow_watsonx_apikey*
+*apikey*
+*api-key*
+*api_key*
+
+# Generic credential patterns
+*ACCESS_TOKEN*
+*access_token*
+*SECRET_KEY*
+*secret_key*
+*PASSWORD*
+*password*
+*SECRET*
+*secret*
+*CREDENTIAL*
+*credential*
+*PRIVATE_KEY*
+*private_key*
+*AUTH_TOKEN*
+*auth_token*
+
+# Private keys
+*.pem
+*.key
+*.p12
+*.pfx
+*.cer
+*.crt
+id_rsa
+id_dsa
+
+# Command outputs that could echo a live key
+*ibmcloud iam api-key-create*
+*ibmcloud login*
+*export *API_KEY*
+*echo $*API_KEY*
+*printenv*
