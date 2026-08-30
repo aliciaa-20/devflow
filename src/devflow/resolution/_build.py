@@ -247,7 +247,8 @@ def run_validation(
     test_record, full_output = _run_test_command(test_command, cwd=local_path)
     write_raw_text(request.id, "test_run.txt", full_output, bob_sessions_dir=bob_sessions_dir)
 
-    final_status = summary["claimed_final_status"]
+    claimed_status = summary["claimed_final_status"]
+    final_status = claimed_status
     if not test_record.passed and final_status in (
         FinalStatus.RESOLVED,
         FinalStatus.PARTIALLY_RESOLVED,
@@ -260,6 +261,7 @@ def run_validation(
         tests_added_or_updated=summary["tests_added_or_updated"],
         tests_executed=(test_record,),
         final_status=final_status,
+        bob_claimed_status=claimed_status,
         remaining_risks=summary["remaining_risks"],
         raw_bob_output_path=str(saved_path),
     )

@@ -158,7 +158,20 @@ class ResolutionOutcome:
     final_status: FinalStatus
     remaining_risks: tuple[str, ...]
     raw_bob_output_path: str
+    # What Bob's own closing report claimed, preserved even when DevFlow's
+    # executed tests forced a different final_status. Keeping both makes the
+    # disagreement inspectable instead of silently overwritten -- the point of
+    # DevFlow owning validation is that it can contradict the agent.
+    bob_claimed_status: Optional[FinalStatus] = None
     completed_at: str = field(default_factory=_utc_now)
+
+    @property
+    def contradicted_bob(self) -> bool:
+        """Whether DevFlow's verified result differs from Bob's claim."""
+        return (
+            self.bob_claimed_status is not None
+            and self.bob_claimed_status != self.final_status
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -167,6 +180,10 @@ class ResolutionOutcome:
             "tests_added_or_updated": list(self.tests_added_or_updated),
             "tests_executed": [item.to_dict() for item in self.tests_executed],
             "final_status": self.final_status.value,
+            "bob_claimed_status": (
+                self.bob_claimed_status.value if self.bob_claimed_status else None
+            ),
+            "contradicted_bob": self.contradicted_bob,
             "remaining_risks": list(self.remaining_risks),
             "raw_bob_output_path": self.raw_bob_output_path,
             "completed_at": self.completed_at,
@@ -182,6 +199,11 @@ class ResolutionOutcome:
                 TestExecutionRecord.from_dict(item) for item in payload.get("tests_executed", ())
             ),
             final_status=FinalStatus(payload["final_status"]),
+            bob_claimed_status=(
+                FinalStatus(payload["bob_claimed_status"])
+                if payload.get("bob_claimed_status")
+                else None
+            ),
             remaining_risks=tuple(payload.get("remaining_risks", ())),
             raw_bob_output_path=str(payload["raw_bob_output_path"]),
             completed_at=str(payload.get("completed_at", "")),

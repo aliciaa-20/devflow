@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 DEFAULT_REPORT_PATH = "frontend/public/devflow-report.json"
+DEFAULT_REPO_GRAPH_PATH = "frontend/public/devflow-repo-graph.json"
 
 
 # ---------------------------------------------------------------------------
@@ -168,6 +169,29 @@ def _cmd_findings(args: argparse.Namespace) -> int:
 # ---------------------------------------------------------------------------
 
 
+def _cmd_status(args: argparse.Namespace) -> int:
+    from devflow.status import build_status, load_sessions
+
+    try:
+        report = _load_report(args.report)
+    except FileNotFoundError:
+        report = None
+    for line in build_status(report, load_sessions(args.sessions_dir)):
+        print(line)
+    return 0
+
+
+def _cmd_explain(args: argparse.Namespace) -> int:
+    from devflow.explain import explain_finding
+
+    payload = _load_report(args.report)
+    for line in explain_finding(
+        payload, args.finding_id, repo_graph_path=args.repo_graph
+    ):
+        print(line)
+    return 0
+
+
 def _cmd_resolve(args: argparse.Namespace) -> int:
     from devflow.resolution.cli import main as resolution_main
 
@@ -235,6 +259,25 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-watsonx", action="store_true", help="Force deterministic prioritization."
     )
     findings.set_defaults(func=_cmd_findings)
+
+    status = subparsers.add_parser(
+        "status", help="Where the change stands: findings, gates, verification."
+    )
+    status.add_argument("--report", default=DEFAULT_REPORT_PATH)
+    status.add_argument("--sessions-dir", default="bob_sessions")
+    status.set_defaults(func=_cmd_status)
+
+    explain = subparsers.add_parser(
+        "explain", help="Why one finding is risky: evidence, blast radius, history."
+    )
+    explain.add_argument("finding_id")
+    explain.add_argument("--report", default=DEFAULT_REPORT_PATH)
+    explain.add_argument(
+        "--repo-graph",
+        default=DEFAULT_REPO_GRAPH_PATH,
+        help="Path to the Repository Knowledge Graph payload.",
+    )
+    explain.set_defaults(func=_cmd_explain)
 
     resolve = subparsers.add_parser(
         "resolve", help="Start a Bob resolution for one finding (human gate 1)."

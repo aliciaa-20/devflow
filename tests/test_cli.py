@@ -98,13 +98,22 @@ def _report_file(tmp_path, *, with_prioritization=False):
 # ---------------------------------------------------------------------------
 
 
-def test_cli_exposes_exactly_the_five_journey_commands():
+def test_cli_exposes_the_expected_command_surface():
+    """The five journey verbs, plus the two read-only inspection commands."""
     parser = build_parser()
     subparsers = [
         action for action in parser._actions if hasattr(action, "choices") and action.choices
     ]
     commands = set(subparsers[0].choices)
-    assert commands == {"analyze", "findings", "resolve", "apply", "validate"}
+    assert commands == {
+        "analyze",
+        "findings",
+        "explain",
+        "status",
+        "resolve",
+        "apply",
+        "validate",
+    }
 
 
 def test_analyze_requires_a_repository_and_a_change():
