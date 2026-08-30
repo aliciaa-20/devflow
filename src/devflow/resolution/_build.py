@@ -32,6 +32,7 @@ from devflow.models.resolution import (
     TestExecutionRecord,
 )
 from devflow.resolution._ingest import parse_proposed_fix, parse_resolution_summary
+from devflow.resolution._prompt import build_bob_prompt
 from devflow.resolution._sessions import write_raw_text, write_request_snapshot, write_state
 
 
@@ -104,6 +105,16 @@ def decide_investigation_gate(
         else ResolutionStatus.REJECTED_BEFORE_INVESTIGATION
     )
     write_state(request, bob_sessions_dir=bob_sessions_dir)
+    if approved:
+        # Hand Bob the context DevFlow already gathered, rather than making the
+        # developer restate the finding by hand. Preserved in the session
+        # directory so the submitted evidence shows exactly what Bob was asked.
+        write_raw_text(
+            request.id,
+            "bob_prompt.md",
+            build_bob_prompt(request),
+            bob_sessions_dir=bob_sessions_dir,
+        )
     return request
 
 

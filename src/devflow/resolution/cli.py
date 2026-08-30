@@ -44,7 +44,7 @@ from devflow.resolution._build import (
     ingest_proposed_fix,
     run_validation,
 )
-from devflow.resolution._sessions import load_request
+from devflow.resolution._sessions import load_request, session_dir
 
 
 def _print_finding(finding: dict) -> None:
@@ -86,12 +86,17 @@ def _cmd_request(args: argparse.Namespace) -> int:
         print("Investigation rejected. Stopping here.")
         return 0
 
+    prompt_path = session_dir(request.id) / "bob_prompt.md"
+    print()
+    print("DevFlow prepared Bob's investigation prompt from this finding's evidence:")
+    print(f"  {prompt_path}")
     print()
     print("Next step:")
-    print("  1. Run Bob's `resolver` custom mode yourself, using the finding above")
-    print("     as investigation context.")
-    print('  2. Save Bob\'s "Propose the Fix" output to a file.')
-    print(f"  3. Run: python -m devflow.resolution ingest-fix {request.id} <path-to-bob-output.md>")
+    print("  1. Open Bob IDE and switch to the `resolver` custom mode.")
+    print("  2. Paste the prompt above. It asks Bob to investigate in parallel")
+    print("     using the four DevFlow skills, and to propose without editing.")
+    print('  3. Save Bob\'s "Propose the Fix" output to a file.')
+    print(f"  4. Run: devflow apply {request.id} <path-to-bob-output.md>")
     return 0
 
 
