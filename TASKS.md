@@ -59,10 +59,10 @@ Updated Risk / Final Status
 | 7 | Developer Report | COMPLETE |
 | 8 | Bob Resolution | COMPLETE (human-gated vertical slice) |
 | 9 | Validation | COMPLETE (deterministic, DevFlow-owned) |
-| 10 | Agentic Workflow | PARTIAL (Bob modes/skills; parallel subagents pending) |
+| 10 | Agentic Workflow | PARTIAL (Bob modes/skills + generated investigation prompt) |
 | 11 | watsonx Integration | COMPLETE (Granite priority judge, live) |
 | 12 | Measurement | IN PROGRESS |
-| 13 | Demo | IN PROGRESS |
+| 13 | Demo | SCRIPTED (docs/DEMO.md); rehearsal pending |
 | 14 | Submission | IN PROGRESS |
 
 Status must reflect verified implementation, not merely the existence of
@@ -478,8 +478,15 @@ Do not add IBM products solely to increase the technology count.
 
 # Current Next Action
 
-**Phases 8, 9 and 11 are implemented and verified. Remaining: measurement,
-demo rehearsal, Bob IDE task-session screenshots, and submission packaging.**
+**Phases 8, 9 and 11 are implemented and verified.**
+
+Remaining, in priority order:
+
+1. Bob IDE task-session screenshots into `bob_sessions/` (submission
+   deliverable, currently unmet).
+2. Run one real Bob resolution end to end against `risk:0:code`.
+3. Frontend rework to match the CLI's presentation quality.
+4. Measurement capture and demo rehearsal (`docs/DEMO.md`).
 
 Before coding:
 
